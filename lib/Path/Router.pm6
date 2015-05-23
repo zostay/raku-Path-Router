@@ -27,9 +27,6 @@ class Path::Router {
             path => $path,
             |%options,
         );
-
-        #warn "# ", $r.components.perl;
-        warn "# ", $r.perl;
     }
 
     method insert-route(Str $path, %options) {

@@ -63,7 +63,7 @@ class Path::Router::Route {
         });
 
         for %!validations.keys -> $validation {
-            if $validation ∈ $components {
+            if $validation ∉ $components {
                 warn "Validation provided for component :$validation, but the"
                    ~ " path " ~ $!path ~ " doesn't contain a variable"
                    ~ " component with that name";
@@ -152,10 +152,15 @@ class Path::Router::Route {
                     # FIXME kludge
                     # Since coercion syntax Int(Cool) is no worky...
                     my $test-part = $part;
-                    given $smart-match {
-                        when Int { $test-part .= Int }
-                        when Num { $test-part .= Num }
-                        when Rat { $test-part .= Rat }
+                    {
+                        given $smart-match {
+                            when Int { $test-part .= Int }
+                            when Num { $test-part .= Num }
+                            when Rat { $test-part .= Rat }
+                        }
+
+                        # Absorb coercion exceptions
+                        CATCH { when True { } }
                     }
 
                     return Path::Router::Route::Match 
