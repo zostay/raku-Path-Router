@@ -22,22 +22,25 @@ class Path::Router {
     has Path::Router::Route @.routes;
     has $.route-class = Path::Router::Route;
 
-    multi method add-route(Str $path, %options?) {
+    multi method add-route(Str $path, *%options) {
         @!routes.push: my $r = $!route-class.new(
             path => $path,
             |%options,
         );
     }
 
+    multi method add-route(Str $path, %options) {
+        self.add-route($path, |%options);
+    }
+
     multi method add-route(Pair $pair) {
         my (Str $path, $options) = $pair.kv;
-        self.add-route($path, $options);
-        #samewith($path, %($options));
+        self.add-route($path, |%($options));
     }
 
     multi method add-route(*%pairs) {
         for %pairs.kv -> $path, %options {
-            samewith($path, %options);
+            self.add-route($path, |%options);
         }
     }
 
