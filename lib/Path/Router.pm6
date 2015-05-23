@@ -39,14 +39,12 @@ class Path::Router {
     }
 
     multi method add-route(*%pairs) {
-        for %pairs.kv -> $path, %options {
-            self.add-route($path, |%options);
+        for %pairs.kv -> $path, $options {
+            self.add-route($path, |%($options));
         }
     }
 
-    method insert-route(Str $path, %options) {
-        my $at = %options<at> :delete // 0;
-
+    multi method insert-route(Str $path, Int :$at = 0, *%options) {
         my $route = $!route-class.new(
             path => $path,
             |%options,
@@ -56,6 +54,21 @@ class Path::Router {
             when 0                { @!routes.unshift: $route }
             when @!routes.end < * { @!routes.push: $route }
             default               { @!routes.splice($at, 0, $route) }
+        }
+    }
+
+    multi method insert-route(Str $path, %options) {
+        self.insert-route($path, |%options);
+    }
+
+    multi method insert-route(Pair $pair) {
+        my (Str $path, $options) = $pair.kv;
+        self.insert-route($path, |%($options));
+    }
+
+    multi method insert-route(*%pairs) {
+        for %pairs.kv -> $path, $options {
+            self.insert-route($path, |%($options));
         }
     }
 
