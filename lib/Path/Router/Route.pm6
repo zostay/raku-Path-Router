@@ -6,7 +6,7 @@ use v6;
 
 class Path::Router::Route {
 
-    class Match {
+    class Path::Router::Route::Match {
         has Str $.path;
         has %.mapping;
         has Path::Router::Route $.route handles <target>;
