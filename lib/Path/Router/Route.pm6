@@ -22,19 +22,13 @@ class Path::Router::Route {
     has $.optional-variable-component-names = self!build-optional-variable-component-names; # is no-clone
     has $.target;
 
-    method clone(*%tweaks) {
-        %tweaks<defaults>    //= %!defaults.clone;
-        %tweaks<validations> //= %!validations.clone;
-
-        my $route = self.nextwith(|%tweaks);
-
-        $route.components = $route!build-components;
-        $route.length = $route!build-length;
-        $route.length-without-optionals = $route!build-length-without-optionals;
-        $route.required-variable-component-names = $route!build-required-variable-component-names;
-        $route.optional-variable-component-names = $route!build-optional-variable-component-names;
-
-        return $route;
+    method copy-attrs returns Hash {
+        return (
+            path        => $!path,
+            defaults    => %!defaults,
+            validations => %!validations,
+            target      => $!target,
+        ).hash;
     }
 
     method has-defaults returns Bool {
@@ -72,7 +66,7 @@ class Path::Router::Route {
     }
 
     method !build-components {
-        $!path.split('/').grep({ .defined && .chars });
+        $!path.comb(/ <-[ \/ ]>+ /).grep({ .chars });
     }
 
     method !build-length {

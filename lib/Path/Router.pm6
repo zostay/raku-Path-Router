@@ -80,20 +80,29 @@ class Path::Router {
         }
     }
 
-    method include-router(Str $path, Path::Router $router) {
+    multi method include-router(Str $path, Path::Router $router) {
         ($path eq '' || $path ~~ /\/$$/)
             || die "Path is either empty or does not end with /";
 
         @!routes.push(
-            |$router.routes.map: { .clone( path => $path ~ .path) }
+            |$router.routes.map: { 
+                my %attr = .copy-attrs;
+                %attr<path> = $path ~ %attr<path>;
+                .new(|%attr)
+            }
         );
+    }
+
+    multi method include-router(Pair $pair) {
+        my (Str $path, Path::Router $router) = $pair.kv;
+        self.include-router($path, $router);
     }
 
     method match(Str $url is copy) returns Path::Router::Route::Match {
         $url  = IO::Spec::Unix.canonpath($url, :parent);
         $url .= subst(/^^\//, '');
 
-        my Str @parts = $url.split('/');
+        my Str @parts = $url.comb(/ <-[ \/ ]>+ /);
 
         my Path::Router::Route::Match @matches;
         for @!routes -> $route {
