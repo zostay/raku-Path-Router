@@ -121,7 +121,7 @@ class Path::Router {
             }
         }
 
-        die X::Path::Router::AmbiguousMatch.new(
+        die X::Path::Router::AmbiguousMatch::PathMatch.new(
             :matches(@found), :$path
         ) if @found.elems > 1;
 
@@ -271,8 +271,9 @@ class Path::Router {
             }
         }
 
-        die X::Path::Router::AmbiguousMatch(
-            matches => @found,
+        die X::Path::Router::AmbiguousMatch::ReverseMatch.new(
+            match-keys => %url-map.keys,
+            routes     => @found,
         ) if @found > 1;
 
         return @found[0;1];
@@ -445,9 +446,13 @@ environment variable.
 
 All path router exceptions inherit from this exception class.
 
-=head2 X::Path::Router::AmbiguousMatch
+=head2 X::Path::Router::AmbiguousMatch::PathMatch
 
 This exception is thrown when a path is found to match two different routes equally well.
+
+=head2 X::Path::Router::AmbiguousMatch::ReverseMatch
+
+This exception is thrown when two paths are found to match a given criteria when looking up the C<uri-for> a path
 
 =head2 X::Path::Router::BadInclusion
 
