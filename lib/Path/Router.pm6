@@ -29,6 +29,18 @@ class Path::Router {
         );
     }
 
+    multi method add-route(Pair $pair) {
+        my (Str $path, $options) = $pair.kv;
+        self.add-route($path, $options);
+        #samewith($path, %($options));
+    }
+
+    multi method add-route(*%pairs) {
+        for %pairs.kv -> $path, %options {
+            samewith($path, %options);
+        }
+    }
+
     method insert-route(Str $path, %options) {
         my $at = %options<at> :delete // 0;
 

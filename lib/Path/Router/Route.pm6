@@ -163,8 +163,17 @@ class Path::Router::Route {
                         CATCH { when True { } }
                     }
 
-                    return Path::Router::Route::Match 
-                        unless $test-part ~~ $smart-match;
+                    my $match = $test-part ~~ $smart-match;
+
+                    # Make sure a regex is a total match
+                    if ($smart-match ~~ Regex) {
+                        return Path::Router::Route::Match 
+                            unless $match && $match eq $test-part;
+                    }
+                    else {
+                        return Path::Router::Route::Match 
+                            unless $match;
+                    }
 
                     # store the coerced version
                     $part = $test-part;
