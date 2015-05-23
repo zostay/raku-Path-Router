@@ -29,6 +29,10 @@ class Path::Router {
         );
     }
 
+    multi method add-route(Str $path, Parcel $options) {
+        self.add-route($path, |$options);
+    }
+
     multi method add-route(Str $path, %options) {
         self.add-route($path, |%options);
     }
@@ -55,6 +59,10 @@ class Path::Router {
             when @!routes.end < * { @!routes.push: $route }
             default               { @!routes.splice($at, 0, $route) }
         }
+    }
+
+    multi method insert-route(Str $path, Parcel $options) {
+        self.insert-route($path, |$options);
     }
 
     multi method insert-route(Str $path, %options) {
