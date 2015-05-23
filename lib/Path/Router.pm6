@@ -5,16 +5,7 @@ use v6;
 =SUBTITLE A tool for routing paths
 
 use Path::Router::Route;
-
-class X::Path::Router::AmbiguousMatch is Exception {
-    has Str $.path;
-    has Path::Router::Route::Match @.matches;
-
-    method message() {
-        die "Ambiguous match: path $!path could match any of "
-            ~ @!matches.map({ .route.path }).sort.join(', ')
-    }
-}
+use X::Path::Router;
 
 class Path::Router {
     constant $DEBUG = ?%*ENV<PATH_ROUTER_DEBUG>;
@@ -82,7 +73,7 @@ class Path::Router {
 
     multi method include-router(Str $path, Path::Router $router) {
         ($path eq '' || $path ~~ /\/$$/)
-            || die "Path is either empty or does not end with /";
+            || die X::Path::Router::BadInclusion.new;
 
         @!routes.push(
             |$router.routes.map: { 
@@ -130,7 +121,7 @@ class Path::Router {
             }
         }
 
-        die X::Path::Router::Route::Match::AmbiguousMatch.new(
+        die X::Path::Router::AmbiguousMatch.new(
             :matches(@found), :$path
         ) if @found.elems > 1;
 
@@ -447,6 +438,26 @@ if no routes match.
 
 You can turn on the verbose debug logging with the C<PATH_ROUTER_DEBUG>
 environment variable.
+
+=begin DIAGNOSTIC
+
+=head2 X::Path::Router
+
+All path router exceptions inherit from this exception class.
+
+=head2 X::Path::Router::AmbiguousMatch
+
+This exception is thrown when a path is found to match two different routes equally well.
+
+=head2 X::Path::Router::BadInclusion
+
+This exception is thrown whenever an attempt is made to include one router in another incorrectly.
+
+=head2 X::Path::Router::BadRoute
+
+This exception is thrown when a route has some serious flaw, such as a validation for a variable that is not found in the path.
+
+=end DIAGNOSTIC
 
 =for BUG
 All complex software has bugs lurking in it, and this module is no

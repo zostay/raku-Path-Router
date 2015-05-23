@@ -4,6 +4,8 @@ use v6;
 
 =SUBTITLE An object to represent a route
 
+use X::Path::Router;
+
 class Path::Router::Route {
 
     class Path::Router::Route::Match {
@@ -58,9 +60,7 @@ class Path::Router::Route {
 
         for %!validations.keys -> $validation {
             if $validation ∉ $components {
-                warn "Validation provided for component :$validation, but the"
-                   ~ " path " ~ $!path ~ " doesn't contain a variable"
-                   ~ " component with that name";
+                die X::Path::Router::BadRoute.new(:$validation, :$!path);
             }
         }
     }
