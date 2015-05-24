@@ -125,7 +125,7 @@ sub mapping-is(Path::Router $router, %mapping, Str $expected is copy, Str $messa
   use Test;
   use Test::Path::Router;
 
-  my $router = Path::Router->new;
+  my $router = Path::Router.new;
 
   # ... define some routes
 

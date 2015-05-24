@@ -284,9 +284,9 @@ class Path::Router {
 
 =begin SYNOPSIS
 
-  my $router = Path::Router->new;
+  my $router = Path::Router.new;
 
-  $router->add_route('blog' => (
+  $router.add-route('blog' => (
       defaults => {
           controller => 'blog',
           action     => 'index',
@@ -294,10 +294,10 @@ class Path::Router {
       # you can provide a fixed "target"
       # for a match as well, this can be
       # anything you want it to be ...
-      target => My::App->get_controller('blog')->get_action('index')
+      target => My::App.get_controller('blog').get_action('index')
   ));
 
-  $router->add_route('blog/:year/:month/:day' => (
+  $router.add-route('blog/:year/:month/:day' => (
       defaults => {
           controller => 'blog',
           action     => 'show_date',
@@ -305,35 +305,35 @@ class Path::Router {
       # validate with ...
       validations => {
           # ... raw-Regexp refs
-          year       => qr/\d{4}/,
-          # ... custom Moose types you created
-          month      => 'NumericMonth',
-          # ... Moose anon-subtypes created inline
-          day        => subtype('Int' => where { $_ <= 31 }),
+          year       => rx/\d ** 4/,
+          # ... custom types you created
+          month      => NumericMonth,
+          # ... anon-subsets created inline
+          day        => (anon subset NumericDay of Int where * <= 31),
       }
   ));
 
-  $router->add_route('blog/:action/?:id' => (
+  $router.add-route('blog/:action/?:id' => (
       defaults => {
           controller => 'blog',
       },
       validations => {
-          action  => qr/\D+/,
-          id      => 'Int',  # also use plain Moose types too
+          action  => rx/\D+/,
+          id      => Int,  # also use Perl6 types too
       }
   ));
 
   # even include other routers
-  $router->include_router( 'polls/' => $another_router );
+  $router.include-router( 'polls/' => $another_router );
 
   # ... in your dispatcher
 
   # returns a Path::Router::Route::Match object
-  my $match = $router->match('/blog/edit/15');
+  my $match = $router.match('/blog/edit/15');
 
   # ... in your code
 
-  my $uri = $router->uri_for(
+  my $uri = $router.uri-for(
       controller => 'blog',
       action     => 'show_date',
       year       => 2006,

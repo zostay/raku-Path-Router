@@ -193,7 +193,7 @@ class Path::Router::Route {
 =begin DESCRIPTION
 
 This object is created by L<Path::Router> when you call the
-C<add_route> method. In general you won't ever create these objects
+C<add-route> method. In general you won't ever create these objects
 directly, they will be created for you and you may sometimes
 introspect them.
 
