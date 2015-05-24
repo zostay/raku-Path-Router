@@ -259,7 +259,7 @@ class Path::Router {
             
             %url-map = %url-defaults, %url-map;
 
-            my $wanted = $required.list ∪ $optional.list ∪ set %match.keys;
+            my $wanted = ($required.list ∪ $optional.list ∪ set %match.keys).SetHash;
             $wanted{$_} :delete for %url-map.keys;
 
             if (!$min.defined || $wanted.elems < $min) {
