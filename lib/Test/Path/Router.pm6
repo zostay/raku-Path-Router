@@ -10,38 +10,42 @@ use Path::Router;
 
 use Test;
 
-# TODO Perl 6 does not have a tool like Test::Builder to help test modules
-# cooperate yet. It really needs one. When it gets one, use it here.
+# TODO Perl 6 does have a tool named Test::Builder, but it doesn't do enought to
+# really warrant using it yet. 
 
 sub routes-ok(Path::Router $router, %routes, Str $message = '') is export {
     my ($passed, $reason);
 
-    for %routes.kv -> $path, %mapping {
+    subtest {
 
-        my $generated-path = $router.uri-for(|%mapping);
+        for %routes.kv -> $path, %mapping {
 
-        $generated-path = '' unless defined $generated-path;
+            my $generated-path = $router.uri-for(|%mapping);
 
-        # the path generated from the hash
-        # is the same as the path supplied
-        if $path ne $generated-path {
-            ok(False, $message);
-            diag("... paths do not match\n" ~
-                 "   got:      '" ~ $generated-path ~ "'\n" ~
-                 "   expected: '" ~ $path ~ "'");
-            return;
+            $generated-path = '' unless defined $generated-path;
+
+            # the path generated from the hash
+            # is the same as the path supplied
+            if $path ne $generated-path {
+                ok(False, 'checking generated path');
+                diag("... paths do not match\n" ~
+                    "   got:      '" ~ $generated-path ~ "'\n" ~
+                    "   expected: '" ~ $path ~ "'");
+
+                last;
+            }
+
+            my $match = $router.match($path);
+            my %generated-mapping = $match.mapping if $match;
+
+            ok( $match && $match.path eq $path, "matched path (" ~ ($match ?? $match.path !! '<no match>') ~ ") and requested paths ($path) match" );
+
+            # the path supplied produces the
+            # same match as the hash supplied
+
+            is_deeply(%generated-mapping, %mapping, 'comparing mapping to expectation');
         }
-
-        my $match = $router.match($path);
-        my %generated-mapping = $match.mapping if $match;
-
-        ok( $match && $match.path eq $path, "matched path (" ~ ($match ?? $match.path !! '<no match>') ~ ") and requested paths ($path) match" );
-
-        # the path supplied produces the
-        # same match as the hash supplied
-
-        is_deeply(%generated-mapping, %mapping, $message);
-    }
+    }, $message;
 }
 
 sub path-ok(Path::Router $router, Str $path, Str $message = '') is export {
@@ -91,7 +95,7 @@ sub mapping-not-ok(Path::Router $router, %mapping, Str $message = '') is export 
 }
 
 sub mapping-is(Path::Router $router, %mapping, Str $expected is copy, Str $message) is export {
-    my $generated-path = $router.uri-for(|%mapping);
+    my Str $generated-path = $router.uri-for(|%mapping);
 
     # the path generated from the hash
     # is the same as the path supplied
@@ -101,8 +105,8 @@ sub mapping-is(Path::Router $router, %mapping, Str $expected is copy, Str $messa
         (defined $generated-path and     defined $expected
             and $generated-path ne $expected)
          {
-        for $generated-path, $expected -> $v is rw {
-            $v = defined $v ?? qq{'$v'} !! qq{undef};
+        for $generated-path, $expected -> Str $v is rw {
+            $v = $v.defined ?? qq{'$v'} !! qq{Nil};
         }
         ok(False, $message);
         diag("... paths do not match\n" ~

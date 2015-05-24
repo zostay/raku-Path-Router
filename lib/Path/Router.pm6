@@ -91,7 +91,7 @@ class Path::Router {
 
     method match(Str $url is copy) returns Path::Router::Route::Match {
         $url  = IO::Spec::Unix.canonpath($url, :parent);
-        $url .= subst(/^^\//, '');
+        $url .= subst(/^\//, '');
 
         my Str @parts = $url.comb(/ <-[ \/ ]>+ /);
 
@@ -219,7 +219,7 @@ class Path::Router {
         return @url.grep({ .defined }).join("/");
     }
 
-    method uri-for(*%url-map is copy) {
+    method uri-for(*%url-map is copy) returns Str {
 
         # anything => undef is useless; ignore it and let the defaults override it
         for %url-map {
@@ -232,8 +232,8 @@ class Path::Router {
             @possible.push: [ $route, $url ] if $url.defined;
         }
 
-        return unless @possible;
-        return @possible[0;1] if @possible == 1;
+        return Str unless @possible;
+        return @possible[0][1] if @possible == 1;
 
         my @found;
         my $min;
@@ -276,7 +276,7 @@ class Path::Router {
             routes     => @found,
         ) if @found > 1;
 
-        return @found[0;1];
+        return @found[0][1];
     }
 }
 

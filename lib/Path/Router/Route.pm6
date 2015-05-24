@@ -108,15 +108,15 @@ class Path::Router::Route {
     # component checking
 
     method is-component-optional(Str $component) {
-        ?($component ~~ / ^^ \? \: /);
+        ?($component ~~ / ^ \? \: /);
     }
 
     method is-component-variable(Str $component) {
-        ?($component ~~ / ^^ \? ? \: /);
+        ?($component ~~ / ^ \? ? \: /);
     }
 
     method get-component-name(Str $component) {
-        $component ~~ / ^^ \? ? \: $<name>=[ .* ] $$ /;
+        $component ~~ / ^ \? ? \: $<name>=[ .* ] $$ /;
         ~$<name>;
     }
 
