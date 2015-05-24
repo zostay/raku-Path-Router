@@ -4,62 +4,62 @@
 
 ## Synopsis
 
-  my $router = Path::Router.new;
-
-  $router.add-route('blog' => (
-      defaults => {
-          controller => 'blog',
-          action     => 'index',
-      },
-      # you can provide a fixed "target"
-      # for a match as well, this can be
-      # anything you want it to be ...
-      target => My::App.get_controller('blog').get_action('index')
-  ));
-
-  $router.add-route('blog/:year/:month/:day' => (
-      defaults => {
-          controller => 'blog',
-          action     => 'show_date',
-      },
-      # validate with ...
-      validations => {
-          # ... raw-Regexp refs
-          year       => rx/\d ** 4/,
-          # ... custom types you created
-          month      => NumericMonth,
-          # ... anon-subsets created inline
-          day        => (anon subset NumericDay of Int where * <= 31),
-      }
-  ));
-
-  $router.add-route('blog/:action/?:id' => (
-      defaults => {
-          controller => 'blog',
-      },
-      validations => {
-          action  => rx/\D+/,
-          id      => Int,  # also use Perl6 types too
-      }
-  ));
-
-  # even include other routers
-  $router.include-router( 'polls/' => $another_router );
-
-  # ... in your dispatcher
-
-  # returns a Path::Router::Route::Match object
-  my $match = $router.match('/blog/edit/15');
-
-  # ... in your code
-
-  my $uri = $router.uri-for(
-      controller => 'blog',
-      action     => 'show_date',
-      year       => 2006,
-      month      => 10,
-      day        => 5,
-  );
+    my $router = Path::Router.new;
+  
+    $router.add-route('blog' => (
+        defaults => {
+            controller => 'blog',
+            action     => 'index',
+        },
+        # you can provide a fixed "target"
+        # for a match as well, this can be
+        # anything you want it to be ...
+        target => My::App.get_controller('blog').get_action('index')
+    ));
+  
+    $router.add-route('blog/:year/:month/:day' => (
+        defaults => {
+            controller => 'blog',
+            action     => 'show_date',
+        },
+        # validate with ...
+        validations => {
+            # ... raw-Regexp refs
+            year       => rx/\d ** 4/,
+            # ... custom types you created
+            month      => NumericMonth,
+            # ... anon-subsets created inline
+            day        => (anon subset NumericDay of Int where * <= 31),
+        }
+    ));
+  
+    $router.add-route('blog/:action/?:id' => (
+        defaults => {
+            controller => 'blog',
+        },
+        validations => {
+            action  => rx/\D+/,
+            id      => Int,  # also use Perl6 types too
+        }
+    ));
+  
+    # even include other routers
+    $router.include-router( 'polls/' => $another_router );
+  
+    # ... in your dispatcher
+  
+    # returns a Path::Router::Route::Match object
+    my $match = $router.match('/blog/edit/15');
+  
+    # ... in your code
+  
+    my $uri = $router.uri-for(
+        controller => 'blog',
+        action     => 'show_date',
+        year       => 2006,
+        month      => 10,
+        day        => 5,
+    );
 
 ## Description
 
