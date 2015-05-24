@@ -68,7 +68,7 @@ suitable for dispatching on. It also provides the inverse in that
 it will take a list of parameters, and construct an appropriate
 uri for it.
 
-=head2 Reversable
+### Reversable
 
 This module places a high degree of importance on reversability.
 The value produced by a path match can be passed back in and you
@@ -76,15 +76,15 @@ will get the same path you originally put in. The result of this
 is that it removes ambiguity and therefore reduces the number of
 possible mis-routings.
 
-=head2 Verifyable
+### Verifyable
 
 This module also provides additional tools you can use to test
 and verify the integrity of your router. These include:
 
-=item * An interactive shell in which you can test various paths and see the
+* An interactive shell in which you can test various paths and see the
 match it will return, and also test the reversability of that match.
 
-=item * A L<Test::Path::Router> module which can be used in your applications
+* A Test::Path::Router module which can be used in your applications
 test suite to easily verify the integrity of your paths.
 
 ## Author
