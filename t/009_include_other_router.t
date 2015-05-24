@@ -196,30 +196,21 @@ routes-ok($router, {
 
 # test a few errors
 
-sub exception(&code) {
-    try {
-        code();
-        CATCH { when True { } }
-    }
-
-    return Nil;
-}
-
-isnt(
-    exception({ $router.include-router('foo' => $test-router) }),
-    Any,
+throws_like(
+    { $router.include-router('foo' => $test-router) },
+    X::Path::Router::BadInclusion,
     "... this dies correctly"
 );
 
-isnt(
-    exception({ $router.include-router('/foo' => $test-router) }),
-    Any,
+throws_like(
+    { $router.include-router('/foo' => $test-router) },
+    X::Path::Router::BadInclusion,
     "... this dies correctly"
 );
 
-isnt(
-    exception({ $router.include-router('/foo/1' => $test-router) }),
-    Any,
+throws_like(
+    { $router.include-router('/foo/1' => $test-router) },
+    X::Path::Router::BadInclusion,
     "... this dies correctly"
 );
 

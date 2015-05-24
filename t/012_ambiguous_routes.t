@@ -6,16 +6,6 @@ use Test;
 
 use Path::Router;
 
-sub exception(&code) {
-    my Exception $x;
-    try {
-        code();
-        CATCH { default { $x = $_ } }
-    }
-
-    return $x;
-}
-
 {
     my $router = Path::Router.new;
 
