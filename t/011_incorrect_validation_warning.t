@@ -7,8 +7,9 @@ use Test;
 use Path::Router;
 
 my $router = Path::Router.new;
-{
-    try {
+
+throws_like(
+    {
         $router.add-route(
             '/foo/:bar' => (
                 validations => {
@@ -16,21 +17,11 @@ my $router = Path::Router.new;
                 },
             ),
         );
-        
-        my $warning;
-        CATCH {
-            when X::Path::Router::BadRoute {
-                $warning = $_;
-                $warning.resume;
-            }
-        }
-
-        like(
-            ~$warning,
-            rx{"Validation provided for component :baz, but the path /foo/:bar doesn't contain a variable component with that name"},
-            "got a warning"
-        );
-    }
-}
+    },
+    X::Path::Router::BadRoute,
+    'creating routes with mismatch between path and validations fails',
+    validation => 'baz',
+    path       => '/foo/:bar',
+);
 
 done;
