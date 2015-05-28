@@ -1,4 +1,4 @@
-module Test::Path::Router;
+unit module Test::Path::Router;
 
 use v6;
 
