@@ -196,19 +196,19 @@ routes-ok($router, {
 
 # test a few errors
 
-throws_like(
+throws-like(
     { $router.include-router('foo' => $test-router) },
     X::Path::Router::BadInclusion,
     "... this dies correctly"
 );
 
-throws_like(
+throws-like(
     { $router.include-router('/foo' => $test-router) },
     X::Path::Router::BadInclusion,
     "... this dies correctly"
 );
 
-throws_like(
+throws-like(
     { $router.include-router('/foo/1' => $test-router) },
     X::Path::Router::BadInclusion,
     "... this dies correctly"
