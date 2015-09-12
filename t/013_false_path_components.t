@@ -14,4 +14,4 @@ for '0/1', '1/0' -> $path {
     is-deeply($match.route.components, Array[Str].new($path.comb(/ <-[ \/ ]>+ /)));
 }
 
-done;
+done-testing;
