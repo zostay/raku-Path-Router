@@ -14,13 +14,13 @@ class Path::Router {
     has $.route-class = Path::Router::Route;
 
     multi method add-route(Str $path, *%options) {
-        @!routes.push: my $r = $!route-class.new(
+        @!routes.push: $!route-class.new(
             path => $path,
             |%options,
         );
     }
 
-    multi method add-route(Str $path, Parcel $options) {
+    multi method add-route(Str $path, List $options) {
         self.add-route($path, |$options);
     }
 
@@ -52,7 +52,7 @@ class Path::Router {
         }
     }
 
-    multi method insert-route(Str $path, Parcel $options) {
+    multi method insert-route(Str $path, List $options) {
         self.insert-route($path, |$options);
     }
 
