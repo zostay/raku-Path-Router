@@ -145,9 +145,9 @@ method !try-route(%url-map is copy, Path::Router::Route $route) returns Str {
     # appear in the url, so they need to match exactly rather
     # than being filled in
 
-    %url-map = flat %url-defaults, %url-map;
+    %url-map = |%url-defaults, |%url-map;
 
-    my @keys = %url-map.keys;
+    my @keys = |%url-map.keys;
 
     my class X::RouteNotMatched is Exception { 
         has Str $.reason; 
@@ -225,10 +225,9 @@ method uri-for(*%url-map is copy) returns Str {
         %url-map{$_} :delete unless %url-map{$_}.defined;
     }
 
-    my @possible;
-    for @!routes -> $route {
+    my @possible = gather for @!routes -> $route {
         my $url = self!try-route(%url-map, $route);
-        @possible.push: $[ $route, $url ] if $url.defined;
+        take $[ $route, $url ] if $url.defined;
     }
 
     return Str unless @possible;
@@ -256,7 +255,7 @@ method uri-for(*%url-map is copy) returns Str {
         # in the url, so they need to match exactly rather than being filled
         # in
         
-        %url-map = %url-defaults, %url-map;
+        %url-map = |%url-defaults, |%url-map;
 
         my $wanted = ($required.list ∪ $optional.list ∪ set %match.keys).SetHash;
         $wanted{$_} :delete for %url-map.keys;
