@@ -6,13 +6,15 @@ use v6;
 
 use X::Path::Router;
 
-class Path::Router::Route {
+class Path::Router::Route { ... }
 
-    class Path::Router::Route::Match {
-        has Str $.path;
-        has %.mapping;
-        has Path::Router::Route $.route handles <target>;
-    }
+class Path::Router::Route::Match {
+    has Str $.path;
+    has %.mapping;
+    has Path::Router::Route $.route handles <target>;
+}
+
+class Path::Router::Route {
 
     has Str $.path;
     has %.defaults; # is copy
