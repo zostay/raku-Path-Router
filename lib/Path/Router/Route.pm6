@@ -154,13 +154,17 @@ class Path::Router::Route {
                         }
 
                         # Absorb coercion exceptions
-                        CATCH { when True { } }
+                        CATCH { default { } }
                     }
 
-                    my $match = $test-part ~~ $smart-match;
+                    # Work-around RT#127071
+                    my $match = do given $smart-match {
+                        when Regex { $test-part ~~ /$smart-match/ }
+                        default    { $test-part ~~ $smart-match }
+                    };
 
                     # Make sure a regex is a total match
-                    if ($smart-match ~~ Regex) {
+                    if ($match ~~ Match) {
                         return Path::Router::Route::Match 
                             unless $match && $match eq $test-part;
                     }
