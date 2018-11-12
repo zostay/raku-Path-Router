@@ -1,5 +1,5 @@
 use v6;
-unit class Path::Router;
+unit class Path::Router:ver<0.1>:auth<github:zostay>;
 
 =NAME Path::Router - A tool for routing paths
 
