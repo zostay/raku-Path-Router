@@ -1,6 +1,5 @@
-unit class Path::Router;
-
 use v6;
+unit class Path::Router;
 
 =NAME Path::Router - A tool for routing paths
 
@@ -75,7 +74,7 @@ multi method include-router(Str $path, Path::Router $router) {
         || die X::Path::Router::BadInclusion.new;
 
     @!routes.push(
-        |$router.routes.map: { 
+        |$router.routes.map: {
             my %attr = .copy-attrs;
             %attr<path> = $path ~ %attr<path>;
             .new(|%attr)
@@ -108,7 +107,7 @@ method match(Str $url is copy) returns Path::Router::Route::Match {
 method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches) {
     my Int $min;
     my Path::Router::Route::Match @found;
-    
+
     for @matches -> $match {
         my $vars = $match.route.required-variable-component-names.elems;
         if !$min.defined || $vars < $min {
@@ -149,12 +148,12 @@ method !try-route(%url-map is copy, Path::Router::Route $route) returns Str {
 
     my @keys = |%url-map.keys;
 
-    my class X::RouteNotMatched is Exception { 
-        has Str $.reason; 
+    my class X::RouteNotMatched is Exception {
+        has Str $.reason;
         method new($reason) {
             self.bless(:$reason);
         }
-        method message() { $!reason } 
+        method message() { $!reason }
     }
 
     if ($DEBUG) {
@@ -175,7 +174,7 @@ method !try-route(%url-map is copy, Path::Router::Route $route) returns Str {
         warn "extra: {@extra}" if $DEBUG;
         die X::RouteNotMatched.new("EXTRA ITEM[{@extra}]");
     }
-    
+
     if my @nomatch = %match.keys.grep({
         %url-map{$_} :exists and %url-map{$_} ne %match{$_}
     }) {
@@ -254,7 +253,7 @@ method uri-for(*%url-map is copy) returns Str {
         # any remaining keys in %defaults are 'extra' -- they don't appear
         # in the url, so they need to match exactly rather than being filled
         # in
-        
+
         %url-map = |%url-defaults, |%url-map;
 
         my $wanted = ($required.list ∪ $optional.list ∪ set %match.keys).SetHash;
@@ -370,7 +369,7 @@ test suite to easily verify the integrity of your paths.
 
 =head1 Methods
 
-=head2 method add-route 
+=head2 method add-route
 
     method add-route(Str $path, *%options)
 

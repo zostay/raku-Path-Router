@@ -54,10 +54,10 @@ class Path::Router::Route {
     submethod !validate-configuration {
         return unless self.has-validations;
 
-        my $components = set @!components.grep({ 
-            self.is-component-variable($^comp) 
-        }).map({ 
-            self.get-component-name($^comp) 
+        my $components = set @!components.grep({
+            self.is-component-variable($^comp)
+        }).map({
+            self.get-component-name($^comp)
         });
 
         for %!validations.keys -> $validation {
@@ -167,11 +167,11 @@ class Path::Router::Route {
 
                     # Make sure a regex is a total match
                     if ($match ~~ Match) {
-                        return Path::Router::Route::Match 
+                        return Path::Router::Route::Match
                             unless $match && $match eq $test-part;
                     }
                     else {
-                        return Path::Router::Route::Match 
+                        return Path::Router::Route::Match
                             unless $match;
                     }
 

@@ -36,7 +36,7 @@ class Path::Router::Shell {
 =begin SYNOPSIS
 
     #!/usr/bin/perl6
-    
+
     use v6;
 
     use My::App::Router;

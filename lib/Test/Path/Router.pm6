@@ -1,6 +1,6 @@
-unit module Test::Path::Router;
-
 use v6;
+
+unit module Test::Path::Router;
 
 use Path::Router;
 
@@ -11,7 +11,7 @@ use Path::Router;
 use Test;
 
 # TODO Perl 6 does have a tool named Test::Builder, but it doesn't do enought to
-# really warrant using it yet. 
+# really warrant using it yet.
 
 sub routes-ok(Path::Router $router, %routes, Str $message = '') is export {
     my ($passed, $reason);
@@ -99,7 +99,7 @@ sub mapping-is(Path::Router $router, %mapping, Str $expected is copy, Str $messa
 
     # the path generated from the hash
     # is the same as the path supplied
-    if 
+    if
         (defined $generated-path and not defined $expected) or
         (defined $expected       and not defined $generated-path) or
         (defined $generated-path and     defined $expected
