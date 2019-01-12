@@ -26,29 +26,25 @@ class Path::Router::Route {
     has $.optional-variable-component-names = self!build-optional-variable-component-names; # is no-clone
     has $.target;
 
-    method copy-attrs returns Hash {
+    method copy-attrs(--> Hash) {
         return (
             path        => $!path,
-            defaults    => %!defaults,
-            validations => %!validations,
+            defaults    => %!defaults.clone,
+            validations => %!validations.clone,
             target      => $!target,
         ).hash;
     }
 
-    method has-defaults returns Bool {
-        ?%!defaults.keys;
+    method has-defaults(--> Bool) {
+        ?%!defaults;
     }
 
-    method has-validations returns Bool {
-        ?%!validations.keys;
+    method has-validations(--> Bool) {
+        ?%!validations;
     }
 
-    method new(*%args) {
-        my $self = self.bless(|%args);
-
-        $self!validate-configuration;
-
-        return $self;
+    submethod TWEAK {
+        self!validate-configuration;
     }
 
     submethod !validate-configuration {
@@ -99,30 +95,30 @@ class Path::Router::Route {
 
     # misc
 
-    method create-default-mapping {
+    method create-default-mapping(--> Hash) {
         %!defaults
     }
 
-    method has-validation-for(Str $name) {
+    method has-validation-for(Str $name --> Bool) {
         %!validations{$name} :exists
     }
 
     # component checking
 
-    method is-component-optional(Str $component) {
+    method is-component-optional(Str $component --> Bool) {
         ?($component ~~ / ^ \? \: /);
     }
 
-    method is-component-variable(Str $component) {
-        ?($component ~~ / ^ \? ? \: /);
+    method is-component-variable(Str $component --> Bool) {
+        ?($component ~~ / ^ <[?*+]> ? \: /);
     }
 
-    method get-component-name(Str $component) {
-        $component ~~ / ^ \? ? \: $<name>=[ .* ] $$ /;
+    method get-component-name(Str $component --> Str) {
+        $component ~~ / ^ <[?*+]> ? \: $<name>=[ .* ] $$ /;
         ~$<name>;
     }
 
-    method match(@parts is copy) returns Path::Router::Route::Match {
+    method match(@parts is copy --> Path::Router::Route::Match) {
         return Nil unless (
             $!length-without-optionals <= @parts.elems <= $!length
         ); #>>
