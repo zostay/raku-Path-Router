@@ -1,8 +1,8 @@
+=begin pod
+
 =TITLE Path::Router::Route::Match
 
 =SUBTITLE The result of a Path::Router match
-
-=begin pod
 
 =begin DESCRIPTION
 
