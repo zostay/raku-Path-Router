@@ -14,13 +14,13 @@ dispatching nessecary.
 
 =head1 ATTRIBUTES
 
-=head2 has $.path
+=head2 path
 
     has Str $.path
 
 This is the path that was matched.
 
-=head2 has %.mapping
+=head2 mapping
 
     has %.mapping
 
@@ -28,7 +28,7 @@ This is the mapping of your router part names to the actual parts of
 the path. If your route had no "variables", then this will be an empty
 HASH ref.
 
-=head2 has $.route
+=head2 route
 
     has Path::Router::Route $.route
 
@@ -38,7 +38,7 @@ This is the L<Path::Router::Route> instance that was matched.
 
 =head2 method target
 
-    method target
+    method target(--> Any)
 
 This method simply delegates to the C<target> method of the C<route>
 that was matched.
