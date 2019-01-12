@@ -376,7 +376,9 @@ This module has no opinions about what it might be useful for. It simply produce
 
 =head1 ATTRIBUTES
 
-=head2 has Path::Router::Route @.routes
+=head2 routes
+
+    has Path::Router::Route @.routes
 
 Stores all the route objects that have been added to the router.
 
