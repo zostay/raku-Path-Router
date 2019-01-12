@@ -55,11 +55,23 @@ you can use it to test new routes or debug routing issues, etc etc etc.
 
 =end DESCRIPTION
 
-=head2 has $.router
+=head1 ATTRIBUTES
+
+=head2 router
+
+    has $.router
+
+This is the router that is being tested.
 
 =head1 METHODS
 
 =head2 method shell
+
+    method shell()
+
+This starts the shell. It will only return when "q" or "Q" are the only
+characters on a line. It uses L<Linenoise> to handle reading lines, history,
+etc.
 
 =begin AUTHOR
 
