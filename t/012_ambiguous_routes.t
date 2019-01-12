@@ -16,7 +16,7 @@ use Path::Router;
         defaults => { a => 'b', c => 'd' }
     ));
 
-    is($router.uri-for(a => 'b'), 'bar');
+    is($router.path-for(a => 'b'), 'bar');
 }
 
 {
@@ -29,7 +29,7 @@ use Path::Router;
         defaults => { a => 'b', c => 'd', e => 'f' }
     ));
 
-    is($router.uri-for(a => 'b'), 'bar');
+    is($router.path-for(a => 'b'), 'bar');
 }
 
 {
@@ -43,7 +43,7 @@ use Path::Router;
     ));
 
     throws-like(
-        { $router.uri-for(a => 'b', c => 'd') },
+        { $router.path-for(a => 'b', c => 'd') },
         X::Path::Router::AmbiguousMatch::ReverseMatch,
         "error when it's actually ambiguous",
         match-keys => { join(' ', .sort) eq 'a c' },

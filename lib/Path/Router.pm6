@@ -208,7 +208,11 @@ method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
     @url.grep({ .defined }).join("/");
 }
 
-method uri-for(*%url-map is copy --> Str) {
+method uri-for(*%url-map --> Str) is DEPRECATED("'path-for'") {
+    self.path-for(|%url-map);
+}
+
+method path-for(*%url-map is copy --> Str) {
 
     # anything => undef is useless; ignore it and let the defaults override it
     for %url-map {
@@ -322,7 +326,7 @@ method uri-for(*%url-map is copy --> Str) {
 
   # ... in your code
 
-  my $uri = $router.uri-for(
+  my $uri = $router.path-for(
       controller => 'blog',
       action     => 'show_date',
       year       => 2006,
@@ -445,9 +449,9 @@ an L<#X::Path::Router::AmbiguousMatch::PathMatch> exception is thrown. This
 exception contains all the best matches, so your code can disambiguate them in
 any way you want.
 
-=head2 method uri-for
+=head2 method path-for
 
-    method uri-for(*%path_descriptor --> Str)
+    method path-for(*%path_descriptor --> Str)
 
 Find the path that, when passed to C<< method match >>, would produce the
 given arguments.  Returns the path without any leading C</>.  Returns an
@@ -481,7 +485,7 @@ Provides:
 
 =head2 X::Path::Router::AmbiguousMatch::ReverseMatch
 
-This exception is thrown when two paths are found to match a given criteria when looking up the C<uri-for> a path
+This exception is thrown when two paths are found to match a given criteria when looking up the C<path-for> a path
 
 Provides:
 

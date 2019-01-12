@@ -16,7 +16,7 @@ sub routes-ok(Path::Router $router, %routes, Str $message = '') is export {
 
         for %routes.kv -> $path, %mapping {
 
-            my $generated-path = $router.uri-for(|%mapping);
+            my $generated-path = $router.path-for(|%mapping);
 
             $generated-path = '' without $generated-path;
 
@@ -73,7 +73,7 @@ sub path-is(Path::Router $router, Str $path, %expected, Str $message = '') is ex
 }
 
 sub mapping-ok(Path::Router $router, %mapping, Str $message = '') is export {
-    if $router.uri-for(|%mapping).defined {
+    if $router.path-for(|%mapping).defined {
         ok(True, $message);
     }
     else {
@@ -82,7 +82,7 @@ sub mapping-ok(Path::Router $router, %mapping, Str $message = '') is export {
 }
 
 sub mapping-not-ok(Path::Router $router, %mapping, Str $message = '') is export {
-    if !$router.uri-for(|%mapping).defined {
+    if !$router.path-for(|%mapping).defined {
         ok(True, $message);
     }
     else {
@@ -91,7 +91,7 @@ sub mapping-not-ok(Path::Router $router, %mapping, Str $message = '') is export 
 }
 
 sub mapping-is(Path::Router $router, %mapping, Str $expected is copy, Str $message) is export {
-    my Str $generated-path = $router.uri-for(|%mapping);
+    my Str $generated-path = $router.path-for(|%mapping);
 
     # the path generated from the hash
     # is the same as the path supplied

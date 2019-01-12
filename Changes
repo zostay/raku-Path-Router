@@ -8,9 +8,14 @@
     * COMPATIBILITY BREAKING: The X::Path::Router::BadRoute exception has been
       renamed to X::Path::Router::BadValidation, which inherits from
       X::Path::Router::BadRoute.
+    * DEPRECATION: .uri-for() is now deprecated. Use .path-for() instead.
+    * Much improved documentation. Still could use more TLC.
     * Add support for UInt coercion in validation.
     * Adding support for slurpy parameters using * and +.
     * A new X::Path::Router::BadSlurpy exception has been added.
+    * Should be slightly more robust and the internals use better idiomatic
+      Perl 6. The original code having been one of the first Perl 6 modules I
+      wrote, with most of the work pre-dating the release of 6.c.
 
 v0.2	2018-11-11
 

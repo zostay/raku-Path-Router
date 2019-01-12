@@ -22,25 +22,25 @@ $router.add-route('/css/:style' => %(
 ));
 
 is(
-    $router.uri-for(page => 'whatever'),
+    $router.path-for(page => 'whatever'),
     'wiki/whatever',
     '... got the right URI'
 );
 
 is(
-    $router.uri-for(style => 'mystyle'),
+    $router.path-for(style => 'mystyle'),
     'css/mystyle',
     '... got the right URI'
 );
 
 is(
-    $router.uri-for(style => 'wiki'),
+    $router.path-for(style => 'wiki'),
     'css/wiki',
     '... got the right URI'
 );
 
 is(
-    $router.uri-for(controller => 'wiki'),
+    $router.path-for(controller => 'wiki'),
     'wiki',
     'defaults correctly excluded (no trailing slash)',
 );
