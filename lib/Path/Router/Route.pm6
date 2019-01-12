@@ -282,11 +282,6 @@ introspect them.
 
 =item method length-without-optionals
 
-=for BUGS
-All complex software has bugs lurking in it, and this module is no
-exception. If you find a bug please either email me, or add the bug
-to cpan-RT.
-
 =begin AUTHOR
 
 Andrew Sterling Hanenkamp E<lt>hanenkamp@cpan.orgE<gt>

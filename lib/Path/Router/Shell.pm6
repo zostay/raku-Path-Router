@@ -61,11 +61,6 @@ you can use it to test new routes or debug routing issues, etc etc etc.
 
 =head2 method shell
 
-=for BUG
-All complex software has bugs lurking in it, and this module is no
-exception. If you find a bug please either email me, or add the bug
-to cpan-RT.
-
 =begin AUTHOR
 
 Andrew Sterling Hanenkamp E<lt>hanenkamp@cpan.orgE<gt>
