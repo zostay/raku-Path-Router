@@ -179,9 +179,10 @@ class Path::Router::Route {
                     try {
                         given $v {
                             when UInt { $test-part .= UInt }
-                            when Int  { $test-part .= Int }
-                            when Num  { $test-part .= Num }
-                            when Rat  { $test-part .= Rat }
+                            when Int  { $test-part .= Int  }
+                            when Num  { $test-part .= Num  }
+                            when Real { $test-part .= Real }
+                            when Rat  { $test-part .= Rat  }
                         }
                     }
 
@@ -240,47 +241,112 @@ introspect them.
 
 =head1 ATTRIBUTES
 
-=head2 has $.path
+=head2 path
 
-=head2 has $.target
+    has Str $.path
 
-=head2 has $.components>
+This is the full path of the route.
 
-=head2 has $.length
+=head2 target
 
-=head2 has %.defaults
+    has $.target
 
-=head2 has %.validations
+This is the configured target for the route. This does not have to be set and is
+not used by the tooling except to return when matching a route.
+
+=head2 components
+
+    has Str @.components
+
+This is the list of components, basically, all the path parts between "/".
+
+=head2 length
+
+    has Int $.length
+
+This is the maximum length of path this route can match (unless it's slurpy,
+then the path has upper limit).
+
+=head2 length-without-optionals
+
+    has Int $.length-without-optionals
+
+This is the minimum length of path this route can match.
+
+=head2 default
+
+    has %.defaults
+
+These are the defaults provided for the path. These will used both for path
+matching and path building.
+
+=head2 validations
+
+    has %.validations
+
+This defines any validations the route needs to perform for each variable. For
+C<Int>, C<UInt>, C<Rat>, C<Real>, and C<Num>, it will also cause coercion to
+happen on the incoming path components.
 
 =head1 METHODS
 
 =head2 method has-defaults
 
+    method has-defaults(--> Bool)
+
+Returns C<True> if this route has any defaults.
+
 =head2 method has-validations
+
+    method has-validations(--> Bool)
+
+Returns C<True> if this route has any validations.
 
 =head2 method has-validation-for
 
-=head2 method create-default-mapping
+    method has-validation-for(Str $name --> Bool)
+
+Returns C<True> if this route has a validation with the given C<$name>.
 
 =head2 method match
 
+    method match(@parts --> Path::Router::Route::Match)
+
+Returns a defined L<Path::Router::Route::Match> if this route matches the given
+path parts. Returns an undefined type-object otherwise.
+
 =head1 Component checks
+
+These methods are called on components, which can be gotten from the
+L<#components> attribute.
 
 =head2 method get-component-name
 
-    method get-component-name(Str $component)
+    method get-component-name(Str $component --> Str)
 
-=item method is-component-optional
+This method will return the variable name of a component for components for
+which L<#method is-component-variable> is C<True>. Do not use this method unless
+that test returns C<True> first.
 
-    method is-component-optionaal(Str $component)
+=head2 method is-component-optional
 
-=item method is-component-variable
+    method is-component-optionaal(Str $component --> Bool)
 
-    method is-component-variable(Str $component)
+This method will return C<True> if the component is optional, that is, it has
+the "?" or "*" flags set on it.
 
-=head1 Length methods
+=head2 method is-component-slurpy
 
-=item method length-without-optionals
+    method is-component-slurpy(Str $component --> Bool)
+
+This method will return C<True> if the component is slurpy, that is, it has the
+"+" or "*" flags set on it.
+
+=head2 method is-component-variable
+
+    method is-component-variable(Str $component --> Bool)
+
+This method will return C<True> if the component is a variable.
 
 =begin AUTHOR
 
