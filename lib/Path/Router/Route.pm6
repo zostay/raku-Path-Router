@@ -238,7 +238,7 @@ introspect them.
 
 =end DESCRIPTION
 
-=head1 Attributes
+=head1 ATTRIBUTES
 
 =head2 has $.path
 
@@ -252,7 +252,7 @@ introspect them.
 
 =head2 has %.validations
 
-=head1 Methods
+=head1 METHODS
 
 =head2 method has-defaults
 

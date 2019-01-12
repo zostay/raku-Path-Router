@@ -57,7 +57,7 @@ you can use it to test new routes or debug routing issues, etc etc etc.
 
 =head2 has $.router
 
-=head1 Methods
+=head1 METHODS
 
 =head2 method shell
 

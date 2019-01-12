@@ -370,74 +370,98 @@ This module has no opinions about what it might be useful for. It simply produce
 
 =end DESCRIPTION
 
-=head1 Methods
+=head1 ATTRIBUTES
+
+=head2 has Path::Router::Route @.routes
+
+Stores all the route objects that have been added to the router.
+
+=head1 METHODS
 
 =head2 method add-route
 
-    method add-route(Str $path, *%options)
+    method add-route(Str $path, *%options --> Int)
 
 Adds a new route to the I<end> of the routes list.
 
+Returns the number of routes stored.
+
 =head2 method insert-route
 
-    method insert-route(Str $path, *%options)
+    method insert-route(Str $path, *%options --> Int)
 
 Adds a new route to the routes list. You may specify an C<at> parameter, which would
 indicate the position where you want to insert your newly created route. The C<at>
 parameter is the C<index> position in the list, so it starts at 0.
 
+Returns the number of routes stored.
+
 Examples:
 
     # You have more than three paths, insert a new route at
     # the 4th item
-    $router->insert_route($path => (
-        at => 3, %options
+    $router.insert-route($path => %(
+        at => 3, |%options
     ));
 
     # If you have less items than the index, then it's the same as
     # as add_route -- it's just appended to the end of the list
-    $router->insert_route($path => (
-        at => 1_000_000, %options
+    $router.insert-route($path => %(
+        at => 1_000_000, |%options
     ));
 
     # If you want to prepend, omit "at", or specify 0
-    $router->insert_Route($path => (
-        at => 0, %options
+    $router.insert_Route($path => %(
+        at => 0, |%options
     ));
 
 =head2 method include-router
 
-    method include-router (Str $path, Path::Router $other_router)
+    method include-router (Str $path, Path::Router $other-router --> Int)
 
-These extracts all the route from C<$other_router> and includes them into
+This extracts all the route from C<$other-router> and includes them into
 the invocant router and prepends C<$path> to all their paths.
 
 It should be noted that this does B<not> do any kind of redispatch to the
-C<$other_router>, it actually extracts all the paths from C<$other_router>
+C<$other-router>, it actually extracts all the paths from C<$other-router>
 and inserts them into the invocant router. This means any changes to
-C<$other_router> after inclusion will not be reflected in the invocant.
+C<$other-router> after inclusion will not be reflected in the invocant.
 
-=head2 has $.routes
+Returns the number of routes stored.
 
 =head2 method match
 
-    method match(Str $path)
+    method match(Str $path --> Path::Router::Route::Match)
 
-Return a L<Path::Router::Route::Match> object for the first route that matches the
+Return a L<Path::Router::Route::Match> object for the best route that matches the
 given C<$path>, or C<undef> if no routes match.
+
+The "best route" is chosen by matching the C<$path> against every route. If no
+route matches, an undefined type object will be returned. If exactly one route
+matches, a match for that route will be returned. If multiple routes match, the
+one with the most required variables will be considered the best match and be
+returned. If there's more than one with the same number of required variables,
+an L<#X::Path::Router::AmbiguousMatch::PathMatch> exception is thrown. This
+exception contains all the best matches, so your code can disambiguate them in
+any way you want.
 
 =head2 method uri-for
 
-    method uri-for(*%path_descriptor)
+    method uri-for(*%path_descriptor --> Str)
 
-Find the path that, when passed to C<< $router->match >>, would produce the
-given arguments.  Returns the path without any leading C</>.  Returns C<undef>
-if no routes match.
+Find the path that, when passed to C<< method match >>, would produce the
+given arguments.  Returns the path without any leading C</>.  Returns an
+undefined type-object if no routes match.
 
-=head1 Debugging
+This will throw an L<#X::Path::Router::AmbiguousMatch::ReverseMatch> exception if
+multiple URLs match. This exception includes the possible routes so your code
+can disambiguate them in whatever fashion makes sense to you.
+
+=head1 DEBUGGING
 
 You can turn on the verbose debug logging with the C<PATH_ROUTER_DEBUG>
-environment variable.
+environment variable. Set that environment variable to a truthy value to enable
+debugging.
 
 =begin DIAGNOSTIC
 
@@ -449,9 +473,21 @@ All path router exceptions inherit from this exception class.
 
 This exception is thrown when a path is found to match two different routes equally well.
 
+Provides:
+
+=item C<< method path(--> Str) >> returns the ambiguous path.
+
+=item C<< method matches(--> Array) >> returns the best matches found.
+
 =head2 X::Path::Router::AmbiguousMatch::ReverseMatch
 
 This exception is thrown when two paths are found to match a given criteria when looking up the C<uri-for> a path
+
+Provides:
+
+=item C<< method match-keys(--> Array[Str]) >> returns the mapping that was ambiguous
+
+=item C<< method routes(--> Array[Str]) >> returns the best matches found
 
 =head2 X::Path::Router::BadInclusion
 
@@ -461,13 +497,21 @@ This exception is thrown whenever an attempt is made to include one router in an
 
 This exception is thrown when a route has some serious flaw.
 
+Provides:
+
+=item C<< method path(--> Str) >> returns the bad route
+
 =head2 X::Path::Router::BadValidation
 
-This is an L</X::Path::Router::BadRoute> exception that is thrown when a validation for a variable that is not found in the path.
+This is an L<#X::Path::Router::BadRoute> exception that is thrown when a validation for a variable that is not found in the path.
+
+Provides:
+
+=item C<< method validation(--> Str) >> returns the validation variable that was named in the route, but was not found in the path
 
 =head2 X::Path::Router::BadSlurpy
 
-This is an L</X::Path::Router::BadRoute> exception that is thrown when a validation attempts to add a slurpy parameter that is not at the end of the path.
+This is an L<#X::Path::Router::BadRoute> exception that is thrown when a validation attempts to add a slurpy parameter that is not at the end of the path.
 
 =end DIAGNOSTIC
 
