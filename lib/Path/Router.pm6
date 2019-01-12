@@ -32,29 +32,20 @@ multi method insert-route(Str $path, Int :$at = 0, *%options) {
         |%options,
     );
 
-    given ($at) {
+    given $at {
         when 0                { @!routes.unshift: $route }
         when @!routes.end < * { @!routes.push: $route }
         default               { @!routes.splice($at, 0, $route) }
     }
 }
 
-multi method insert-route(Str $path, List $options) {
-    self.insert-route($path, |$options);
-}
-
 multi method insert-route(Str $path, %options) {
     self.insert-route($path, |%options);
 }
 
-multi method insert-route(Pair $pair) {
-    my (Str $path, $options) = $pair.kv;
-    self.insert-route($path, |%($options));
-}
-
-multi method insert-route(*%pairs) {
-    for %pairs.kv -> $path, $options {
-        self.insert-route($path, |%($options));
+multi method insert-route(*@pairs, *%pairs) {
+    for (|@pairs, |%pairs)».kv -> (Str $path, %options) {
+        self.insert-route($path, |%options);
     }
 }
 
@@ -88,7 +79,7 @@ method match(Str $url is copy) returns Path::Router::Route::Match {
         @matches.push: $match;
     }
 
-    return Path::Router::Route::Match if @matches.elems == 0;
+    return Nil                        if @matches.elems == 0;
     return @matches[0]                if @matches.elems == 1;
     return self!disambiguate-matches($url, @matches);
 }
@@ -218,7 +209,7 @@ method uri-for(*%url-map is copy) returns Str {
         take $[ $route, $url ] if $url.defined;
     }
 
-    return Str unless @possible;
+    return Nil unless @possible;
     return @possible[0][1] if @possible == 1;
 
     my @found;
@@ -355,6 +346,12 @@ match it will return, and also test the reversability of that match.
 
 =item A L<Test::Path::Router> module which can be used in your applications
 test suite to easily verify the integrity of your paths.
+
+=head2 Validated and Automatically Coerced
+
+Each path may use one or more variables, each given a validation. If a numeric
+type is used, the value passed on to the action will also be coerced into the
+correct value.
 
 =end DESCRIPTION
 
