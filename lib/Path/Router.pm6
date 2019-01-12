@@ -9,24 +9,26 @@ constant $DEBUG = ?%*ENV<PATH_ROUTER_DEBUG>;
 has Path::Router::Route @.routes;
 has $.route-class = Path::Router::Route;
 
-multi method add-route(Str $path, *%options) {
+multi method add-route(Str $path, *%options --> Int) {
     @!routes.push: $!route-class.new(
         path => $path,
         |%options,
     );
+    @!routes.elems;
 }
 
-multi method add-route(Str $path, %options) {
+multi method add-route(Str $path, %options --> Int) {
     self.add-route($path, |%options);
 }
 
-multi method add-route(*@pairs, *%pairs) {
+multi method add-route(*@pairs, *%pairs --> Int) {
     for (|@pairs, |%pairs)».kv -> (Str $path, %options) {
         self.add-route($path, |%options);
     }
+    @!routes.elems;
 }
 
-multi method insert-route(Str $path, Int :$at = 0, *%options) {
+multi method insert-route(Str $path, Int :$at = 0, *%options --> Int) {
     my $route = $!route-class.new(
         path => $path,
         |%options,
@@ -37,19 +39,23 @@ multi method insert-route(Str $path, Int :$at = 0, *%options) {
         when @!routes.end < * { @!routes.push: $route }
         default               { @!routes.splice($at, 0, $route) }
     }
+
+    @!routes.elems;
 }
 
-multi method insert-route(Str $path, %options) {
+multi method insert-route(Str $path, %options --> Int) {
     self.insert-route($path, |%options);
 }
 
-multi method insert-route(*@pairs, *%pairs) {
+multi method insert-route(*@pairs, *%pairs --> Int) {
     for (|@pairs, |%pairs)».kv -> (Str $path, %options) {
         self.insert-route($path, |%options);
     }
+
+    @!routes.elems;
 }
 
-multi method include-router(Str $path, Path::Router $router) {
+multi method include-router(Str $path, Path::Router $router --> Int) {
     ($path eq '' || $path ~~ /\/$$/)
         || die X::Path::Router::BadInclusion.new;
 
@@ -60,14 +66,16 @@ multi method include-router(Str $path, Path::Router $router) {
             .new(|%attr)
         }
     );
+
+    @!routes.elems;
 }
 
-multi method include-router(Pair $pair) {
+multi method include-router(Pair $pair --> Int) {
     my (Str $path, Path::Router $router) = $pair.kv;
     self.include-router($path, $router);
 }
 
-method match(Str $url is copy) returns Path::Router::Route::Match {
+method match(Str $url is copy --> Path::Router::Route::Match) {
     $url  = IO::Spec::Unix.canonpath($url, :parent);
     $url .= subst(/^\//, '');
 
@@ -84,7 +92,7 @@ method match(Str $url is copy) returns Path::Router::Route::Match {
     return self!disambiguate-matches($url, @matches);
 }
 
-method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches) {
+method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches --> Path::Router::Route::Match) {
     my Int $min;
     my Path::Router::Route::Match @found;
 
@@ -103,10 +111,10 @@ method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches) {
         :matches(@found), :$path
     ) if @found.elems > 1;
 
-    return @found[0];
+    @found[0];
 }
 
-method !try-route(%url-map is copy, Path::Router::Route $route) returns Str {
+method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
     my @url;
 
     my $required = $route.required-variable-component-names;
@@ -190,14 +198,14 @@ method !try-route(%url-map is copy, Path::Router::Route $route) returns Str {
                 warn "... ", $_;
             }
 
-            return Str;
+            return Nil;
         }
     }
 
-    return @url.grep({ .defined }).join("/");
+    @url.grep({ .defined }).join("/");
 }
 
-method uri-for(*%url-map is copy) returns Str {
+method uri-for(*%url-map is copy --> Str) {
 
     # anything => undef is useless; ignore it and let the defaults override it
     for %url-map {
@@ -253,7 +261,7 @@ method uri-for(*%url-map is copy) returns Str {
         routes     => @found,
     ) if @found > 1;
 
-    return @found[0][1];
+    @found[0][1];
 }
 
 =begin pod
@@ -352,6 +360,10 @@ test suite to easily verify the integrity of your paths.
 Each path may use one or more variables, each given a validation. If a numeric
 type is used, the value passed on to the action will also be coerced into the
 correct value.
+
+=head2 Flexible
+
+This module has no opinions about what it might be useful for. It simply produces a hash of values that can be used for dispatch, logging, or whatever your application is.
 
 =end DESCRIPTION
 

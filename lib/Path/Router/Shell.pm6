@@ -3,10 +3,6 @@ use v6;
 use Path::Router;
 use Linenoise;
 
-=TITLE Path::Router::Shell
-
-=SUBTITLE An interactive shell for testing router configurations
-
 class Path::Router::Shell {
     has Path::Router $.router;
 
@@ -32,6 +28,10 @@ class Path::Router::Shell {
 }
 
 =begin pod
+
+=TITLE Path::Router::Shell
+
+=SUBTITLE An interactive shell for testing router configurations
 
 =begin SYNOPSIS
 
