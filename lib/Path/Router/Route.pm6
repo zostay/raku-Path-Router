@@ -123,9 +123,9 @@ class Path::Router::Route {
     }
 
     method match(@parts is copy) returns Path::Router::Route::Match {
-        return Path::Router::Route::Match unless (
+        return Nil unless (
             $!length-without-optionals <= @parts.elems <= $!length
-        );
+        ); #>>
 
         my %mapping = self.create-default-mapping if self.has-defaults;
 
@@ -145,34 +145,25 @@ class Path::Router::Route {
                 if self.has-validation-for($name) {
                     my $smart-match := %!validations{$name};
 
-                    # FIXME kludge
-                    # Since coercion syntax Int(Cool) is no worky...
                     my $test-part = $part;
-                    {
+                    try {
                         given $smart-match {
-                            when Int { $test-part .= Int }
-                            when Num { $test-part .= Num }
-                            when Rat { $test-part .= Rat }
+                            when UInt { $test-part .= UInt }
+                            when Int  { $test-part .= Int }
+                            when Num  { $test-part .= Num }
+                            when Rat  { $test-part .= Rat }
                         }
-
-                        # Absorb coercion exceptions
-                        CATCH { default { } }
                     }
 
-                    # Work-around RT#127071
-                    my $match = do given $smart-match {
-                        when Regex { $test-part ~~ /$smart-match/ }
-                        default    { $test-part ~~ $smart-match }
-                    };
+                    my $match = $test-part ~~ $smart-match;
 
                     # Make sure a regex is a total match
                     if ($match ~~ Match) {
-                        return Path::Router::Route::Match
+                        return Nil
                             unless $match && $match eq $test-part;
                     }
                     else {
-                        return Path::Router::Route::Match
-                            unless $match;
+                        return Nil unless $match;
                     }
 
                     # store the coerced version
@@ -181,7 +172,7 @@ class Path::Router::Route {
                 %mapping{$name} = $part;
             }
             else {
-                return Path::Router::Route::Match unless $c eq $part;
+                return Nil unless $c eq $part;
             }
         }
 

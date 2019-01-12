@@ -1,10 +1,11 @@
 {{$NEXT}}
 
-    * COMPATIBILITY BREAKING: Prior to this revision, .add-route() allowed the
-    * options part of the argument to be specified as a list of pairs rather
-    * than always as a hash. This was a mistake. The second argument, regardless
-    * of whether it is passed using the two argument multi or as a list of
-    * pairs, the options must always be passed as a hash.
+    * COMPATIBILITY BREAKING: Prior to this revision, .add-route(...) allowed
+      the options part of the argument to be specified as a list of pairs rather
+      than always as a hash. This was a mistake. The second argument, regardless
+      of whether it is passed using the two argument multi or as a list of
+      pairs, the options must always be passed as a hash.
+    * Add support for UInt coercion in validation.
 
 v0.2	2018-11-11
 
