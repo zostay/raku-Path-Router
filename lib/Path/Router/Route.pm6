@@ -1,9 +1,5 @@
 use v6;
 
-=TITLE Path::Router::Route;
-
-=SUBTITLE An object to represent a route
-
 use X::Path::Router;
 
 class Path::Router::Route { ... }
@@ -48,17 +44,24 @@ class Path::Router::Route {
     }
 
     submethod !validate-configuration {
+        # If there's a slurpy, it had better be the last one
+        die X::Path::Router::BadSlurpy.new(:$!path)
+            if @!components > 1
+            && self.is-component-slurpy(@!components[0..*-2].any);
+
         return unless self.has-validations;
 
+        # Get the names of all the variable components
         my $components = set @!components.grep({
             self.is-component-variable($^comp)
         }).map({
             self.get-component-name($^comp)
         });
 
+        # Make we only have validations for variables in the path
         for %!validations.keys -> $validation {
             if $validation ∉ $components {
-                die X::Path::Router::BadRoute.new(:$validation, :$!path);
+                die X::Path::Router::BadValidation.new(:$validation, :$!path);
             }
         }
     }
@@ -96,7 +99,7 @@ class Path::Router::Route {
     # misc
 
     method create-default-mapping(--> Hash) {
-        %!defaults
+        %(%!defaults.map({ .key => .value.clone }));
     }
 
     method has-validation-for(Str $name --> Bool) {
@@ -105,8 +108,12 @@ class Path::Router::Route {
 
     # component checking
 
+    method is-component-slurpy(Str $component --> Bool) {
+        ?($component ~~ / ^ <[*+]> \: /);
+    }
+
     method is-component-optional(Str $component --> Bool) {
-        ?($component ~~ / ^ \? \: /);
+        ?($component ~~ / ^ <[*?]> \: /);
     }
 
     method is-component-variable(Str $component --> Bool) {
@@ -114,36 +121,63 @@ class Path::Router::Route {
     }
 
     method get-component-name(Str $component --> Str) {
-        $component ~~ / ^ <[?*+]> ? \: $<name>=[ .* ] $$ /;
+        $component ~~ / ^ <[?*+]> ? \: $<name> = [ .* ] $$ /;
         ~$<name>;
     }
 
-    method match(@parts is copy --> Path::Router::Route::Match) {
-        return Nil unless (
-            $!length-without-optionals <= @parts.elems <= $!length
-        ); #>>
+    method has-slurpy-match(--> Bool) {
+        return False unless @!components;
+        self.is-component-slurpy(@!components[*-1])
+    }
 
-        my %mapping = self.create-default-mapping if self.has-defaults;
+    method match(@parts --> Path::Router::Route::Match) {
+        # No match if the parts length is not long enough
+        return Nil unless @parts >= $!length-without-optionals;
 
-        my @orig-parts = @parts;
+        # No match if parts is too long (unless we're slurpy, then it's fine)
+        return Nil unless self.has-slurpy-match || $!length >= @parts;
+
+        # Build the default mapping, shallow cloning any refs
+        my %mapping = $.has-defaults ?? self.create-default-mapping !! ();
+
+        # a working copy of parts we'll shift from as we go
+        my @wc-parts = @parts;
 
         for @!components -> $c {
-            unless @parts {
+            unless @wc-parts {
                 die "should never get here: " ~
                     "no @parts left, but more required components remain"
                         if ! self.is-component-optional($c);
                 last;
             }
-            my $part = @parts.shift;
 
-            if (self.is-component-variable($c)) {
+            my $part;
+
+            # Slurpy sucks up the rest of the parts
+            if self.is-component-slurpy($c) {
+                $part = @wc-parts.clone.List;
+                @wc-parts = ();
+            }
+
+            # Or just get the next part
+            else {
+                $part = @wc-parts.shift;
+            }
+
+            # If this is a variable, process it
+            if self.is-component-variable($c) {
+
+                # The variable name
                 my $name = self.get-component-name($c);
-                if self.has-validation-for($name) {
-                    my $smart-match := %!validations{$name};
 
+                # Validate the value for the variable if needed
+                if self.has-validation-for($name) {
+                    my $v = %!validations{$name};
+
+                    # Automatically coerce the value first, if needed
                     my $test-part = $part;
                     try {
-                        given $smart-match {
+                        given $v {
                             when UInt { $test-part .= UInt }
                             when Int  { $test-part .= Int }
                             when Num  { $test-part .= Num }
@@ -151,13 +185,16 @@ class Path::Router::Route {
                         }
                     }
 
-                    my $match = $test-part ~~ $smart-match;
+                    # Apply the validation check
+                    my $match = $test-part ~~ $v;
 
-                    # Make sure a regex is a total match
+                    # Regexes must be a total match
                     if ($match ~~ Match) {
                         return Nil
                             unless $match && $match eq $test-part;
                     }
+
+                    # Anything else matches whatever it matches
                     else {
                         return Nil unless $match;
                     }
@@ -165,15 +202,20 @@ class Path::Router::Route {
                     # store the coerced version
                     $part = $test-part;
                 }
+
+                # Variable is valid and ready to map
                 %mapping{$name} = $part;
             }
+
+            # Otherwise, path must eq component
             else {
                 return Nil unless $c eq $part;
             }
         }
 
+        # Successful match, construct and return
         return Path::Router::Route::Match.new(
-            path    => @orig-parts.join('/'),
+            path    => @parts.join('/'),
             route   => self,
             mapping => %mapping,
         );
@@ -182,6 +224,10 @@ class Path::Router::Route {
 }
 
 =begin pod
+
+=TITLE Path::Router::Route;
+
+=SUBTITLE An object to represent a route
 
 =begin DESCRIPTION
 

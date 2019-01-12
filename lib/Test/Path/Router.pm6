@@ -4,13 +4,9 @@ unit module Test::Path::Router;
 
 use Path::Router;
 
-=TITLE Test::Path::Router
-
-=SUBTITLE A testing module for testing routes
-
 use Test;
 
-# TODO Perl 6 does have a tool named Test::Builder, but it doesn't do enought to
+# TODO Perl 6 does have a tool named Test::Builder, but it doesn't do enough to
 # really warrant using it yet.
 
 sub routes-ok(Path::Router $router, %routes, Str $message = '') is export {
@@ -22,15 +18,15 @@ sub routes-ok(Path::Router $router, %routes, Str $message = '') is export {
 
             my $generated-path = $router.uri-for(|%mapping);
 
-            $generated-path = '' unless defined $generated-path;
+            $generated-path = '' without $generated-path;
 
             # the path generated from the hash
             # is the same as the path supplied
             if $path ne $generated-path {
                 ok(False, 'checking generated path');
                 diag("... paths do not match\n" ~
-                    "   got:      '" ~ $generated-path ~ "'\n" ~
-                    "   expected: '" ~ $path ~ "'");
+                    "   got:      '$generated-path'\n" ~
+                    "   expected: '$path'");
 
                 last;
             }
@@ -119,6 +115,10 @@ sub mapping-is(Path::Router $router, %mapping, Str $expected is copy, Str $messa
 }
 
 =begin pod
+
+=TITLE Test::Path::Router
+
+=SUBTITLE A testing module for testing routes
 
 =begin SYNOPSIS
 
@@ -210,7 +210,7 @@ they are valid.
 
 This test function will accept a set of C<%test_routes> which
 will get checked against your C<$router> instance. This will
-check to be sure that all paths in C<%test_routes> procude
+check to be sure that all paths in C<%test_routes> produce
 the expected mappings, and that all mappings also produce the
 expected paths. It basically assures you that your paths
 are roundtrippable, so that you can be confident in them.

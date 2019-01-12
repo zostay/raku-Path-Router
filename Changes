@@ -5,7 +5,12 @@
       than always as a hash. This was a mistake. The second argument, regardless
       of whether it is passed using the two argument multi or as a list of
       pairs, the options must always be passed as a hash.
+    * COMPATIBILITY BREAKING: The X::Path::Router::BadRoute exception has been
+      renamed to X::Path::Router::BadValidation, which inherits from
+      X::Path::Router::BadRoute.
     * Add support for UInt coercion in validation.
+    * Adding support for slurpy parameters using * and +.
+    * A new X::Path::Router::BadSlurpy exception has been added.
 
 v0.2	2018-11-11
 

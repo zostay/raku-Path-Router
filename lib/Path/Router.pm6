@@ -4,7 +4,7 @@ unit class Path::Router:ver<0.2>:auth<github:zostay>;
 use Path::Router::Route;
 use X::Path::Router;
 
-constant $DEBUG = ?%*ENV<PATH_ROUTER_DEBUG>;
+our $DEBUG = ?%*ENV<PATH_ROUTER_DEBUG>;
 
 has Path::Router::Route @.routes;
 has $.route-class = Path::Router::Route;
@@ -124,7 +124,7 @@ method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
 
     my %match = $route.defaults;
 
-    for $required.keys.Slip, $optional.keys.Slip -> $component {
+    for |$required.keys, |$optional.keys -> $component {
         next unless %match{$component} :exists;
         %url-defaults{$component} = %match{$component} :delete;
     }
@@ -144,59 +144,62 @@ method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
         method message() { $!reason }
     }
 
-    if ($DEBUG) {
-        warn "> Attempting to match ", $route.path, " to (", @keys.join(" / "), ")";
-    }
+    my sub debug { note [~] @_ if $DEBUG }
+
+    debug("> Attempting to match ", $route.path, " to (", @keys.join(" / "), ")");
+
     (
         $required.elems <= @keys.elems <= $required.elems + $optional.elems + %match.elems
-    ) || die X::RouteNotMatched.new("LENGTH DID NOT MATCH ({$required.elems} {$required.elems <= @keys.elems ?? "≤" !! "≰"} {@keys.elems} {@keys.elems <= $required.elems + $optional.elems + %match.elems ?? "≤" !! "≰"} {$required.elems} + {$optional.elems} + {%match.elems})");
+    ) || die X::RouteNotMatched.new("LENGTH DID NOT MATCH ({$required.elems} {$required.elems <= @keys.elems ?? "≤" !! "≰"} {@keys.elems} {@keys.elems <= $required.elems + $optional.elems + %match.elems ?? "≤" !! "≰"} {$required.elems} + {$optional.elems} + {%match.elems})"); #>>>>
 
     if my @missing = $required.keys.grep({ !(%url-map{$_} :exists) }) {
-        warn "missing: {@missing}" if $DEBUG;
+        debug("missing: {@missing}");
         die X::RouteNotMatched.new("MISSING ITEM [{@missing}]");
     }
 
     if my @extra = %url-map.keys.grep({
         $_ ∉ $required && $_ ∉ $optional && !%match{$_}
     }) {
-        warn "extra: {@extra}" if $DEBUG;
+        debug("extra: {@extra}");
         die X::RouteNotMatched.new("EXTRA ITEM[{@extra}]");
     }
 
     if my @nomatch = %match.keys.grep({
         %url-map{$_} :exists and %url-map{$_} ne %match{$_}
     }) {
-        warn "no match: {@nomatch}" if $DEBUG;
+        debug("no match: {@nomatch}");
         die X::RouteNotMatched.new("NO MATCH[{@nomatch}]");
     }
 
     for $route.components -> $component {
         if $route.is-component-variable($component) {
-            warn "\t\t... found a variable ($component)" if $DEBUG;
+            debug("\t\t... found a variable ($component)");
             my $name = $route.get-component-name($component);
 
-            @url.push: %url-map{$name}
-                unless
-                    $route.is-component-optional($component) &&
-                    $route.defaults{$name}                   &&
-                    $route.defaults{$name} eq %url-map{$name};
+            unless $route.is-component-optional($component)
+                && $route.defaults{$name}
+                && $route.defaults{$name} eq %url-map{$name}
+            {
+                my $c = %url-map{$name};
+                $c = join '/', @($c)
+                    if $route.is-component-slurpy($component);
+                @url.push: $c;
+            }
         }
 
         else {
-            warn "\t\t... found a constant ($component)" if $DEBUG;
+            debug("\t\t... found a constant ($component)");
 
             @url.push: $component;
         }
 
-        warn "+++ URL so far ... ", @url.join("/") if $DEBUG;
+        debug("+++ URL so far ... ", @url.join("/"));
     }
 
     CATCH {
         when X::RouteNotMatched {
-            if $DEBUG {
-                warn 'URL: ', @url.join("/");
-                warn "... ", $_;
-            }
+            debug('URL: ', @url.join("/"));
+            debug("... ", $_);
 
             return Nil;
         }
@@ -456,7 +459,15 @@ This exception is thrown whenever an attempt is made to include one router in an
 
 =head2 X::Path::Router::BadRoute
 
-This exception is thrown when a route has some serious flaw, such as a validation for a variable that is not found in the path.
+This exception is thrown when a route has some serious flaw.
+
+=head2 X::Path::Router::BadValidation
+
+This is an L</X::Path::Router::BadRoute> exception that is thrown when a validation for a variable that is not found in the path.
+
+=head2 X::Path::Router::BadSlurpy
+
+This is an L</X::Path::Router::BadRoute> exception that is thrown when a validation attempts to add a slurpy parameter that is not at the end of the path.
 
 =end DIAGNOSTIC
 
