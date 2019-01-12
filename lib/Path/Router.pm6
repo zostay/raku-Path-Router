@@ -1,8 +1,6 @@
 use v6;
 unit class Path::Router:ver<0.2>:auth<github:zostay>;
 
-=NAME Path::Router - A tool for routing paths
-
 use Path::Router::Route;
 use X::Path::Router;
 
@@ -18,22 +16,13 @@ multi method add-route(Str $path, *%options) {
     );
 }
 
-multi method add-route(Str $path, List $options) {
-    self.add-route($path, |$options);
-}
-
 multi method add-route(Str $path, %options) {
     self.add-route($path, |%options);
 }
 
-multi method add-route(Pair $pair) {
-    my (Str $path, $options) = $pair.kv;
-    self.add-route($path, |%($options));
-}
-
-multi method add-route(*%pairs) {
-    for %pairs.kv -> $path, $options {
-        self.add-route($path, |%($options));
+multi method add-route(*@pairs, *%pairs) {
+    for (|@pairs, |%pairs)».kv -> (Str $path, %options) {
+        self.add-route($path, |%options);
     }
 }
 
@@ -278,6 +267,8 @@ method uri-for(*%url-map is copy) returns Str {
 
 =begin pod
 
+=NAME Path::Router - A tool for routing paths
+
 =begin SYNOPSIS
 
   my $router = Path::Router.new;
@@ -354,15 +345,15 @@ will get the same path you originally put in. The result of this
 is that it removes ambiguity and therefore reduces the number of
 possible mis-routings.
 
-=head2 Verifyable
+=head2 Verifiable
 
 This module also provides additional tools you can use to test
 and verify the integrity of your router. These include:
 
-=item * An interactive shell in which you can test various paths and see the
+=item An interactive shell in which you can test various paths and see the
 match it will return, and also test the reversability of that match.
 
-=item * A L<Test::Path::Router> module which can be used in your applications
+=item A L<Test::Path::Router> module which can be used in your applications
 test suite to easily verify the integrity of your paths.
 
 =end DESCRIPTION

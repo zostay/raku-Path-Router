@@ -8,14 +8,14 @@ use Path::Router;
 
 my $router = Path::Router.new;
 
-$router.add-route('/wiki/?:page' => (
+$router.add-route('/wiki/?:page' => %(
     defaults => {
         controller => 'wiki',
         page       => 'HomePage',
     }
 ));
 
-$router.add-route('/css/:style' => (
+$router.add-route('/css/:style' => %(
     defaults => {
         controller => 'css'
     }
