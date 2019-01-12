@@ -55,7 +55,7 @@ SYNOPSIS
 
     # ... in your code
 
-    my $uri = $router.uri-for(
+    my $uri = $router.path-for(
         controller => 'blog',
         action     => 'show_date',
         year       => 2006,
@@ -73,81 +73,106 @@ Reversable
 
 This module places a high degree of importance on reversability. The value produced by a path match can be passed back in and you will get the same path you originally put in. The result of this is that it removes ambiguity and therefore reduces the number of possible mis-routings.
 
-Verifyable
+Verifiable
 ----------
 
 This module also provides additional tools you can use to test and verify the integrity of your router. These include:
 
-  * * An interactive shell in which you can test various paths and see the match it will return, and also test the reversability of that match.
+  * An interactive shell in which you can test various paths and see the match it will return, and also test the reversability of that match.
 
-  * * A [Test::Path::Router](Test::Path::Router) module which can be used in your applications test suite to easily verify the integrity of your paths.
+  * A [Test::Path::Router](Test::Path::Router) module which can be used in your applications test suite to easily verify the integrity of your paths.
 
-Methods
+Validated and Automatically Coerced
+-----------------------------------
+
+Each path may use one or more variables, each given a validation. If a numeric type is used, the value passed on to the action will also be coerced into the correct value.
+
+Flexible
+--------
+
+This module has no opinions about what it might be useful for. It simply produces a hash of values that can be used for dispatch, logging, or whatever your application is.
+
+ATTRIBUTES
+==========
+
+has Path::Router::Route @.routes
+--------------------------------
+
+Stores all the route objects that have been added to the router.
+
+METHODS
 =======
 
 method add-route
 ----------------
 
-    method add-route(Str $path, *%options)
+    method add-route(Str $path, *%options --> Int)
 
 Adds a new route to the *end* of the routes list.
+
+Returns the number of routes stored.
 
 method insert-route
 -------------------
 
-    method insert-route(Str $path, *%options)
+    method insert-route(Str $path, *%options --> Int)
 
 Adds a new route to the routes list. You may specify an `at` parameter, which would indicate the position where you want to insert your newly created route. The `at` parameter is the `index` position in the list, so it starts at 0.
+
+Returns the number of routes stored.
 
 Examples:
 
     # You have more than three paths, insert a new route at
     # the 4th item
-    $router->insert_route($path => (
-        at => 3, %options
+    $router.insert-route($path => %(
+        at => 3, |%options
     ));
 
     # If you have less items than the index, then it's the same as
     # as add_route -- it's just appended to the end of the list
-    $router->insert_route($path => (
-        at => 1_000_000, %options
+    $router.insert-route($path => %(
+        at => 1_000_000, |%options
     ));
 
     # If you want to prepend, omit "at", or specify 0
-    $router->insert_Route($path => (
-        at => 0, %options
+    $router.insert_Route($path => %(
+        at => 0, |%options
     ));
 
 method include-router
 ---------------------
 
-    method include-router (Str $path, Path::Router $other_router)
+    method include-router (Str $path, Path::Router $other-router --> Int)
 
-These extracts all the route from `$other_router` and includes them into the invocant router and prepends `$path` to all their paths.
+This extracts all the route from `$other-router` and includes them into the invocant router and prepends `$path` to all their paths.
 
-It should be noted that this does **not** do any kind of redispatch to the `$other_router`, it actually extracts all the paths from `$other_router` and inserts them into the invocant router. This means any changes to `$other_router` after inclusion will not be reflected in the invocant.
+It should be noted that this does **not** do any kind of redispatch to the `$other-router`, it actually extracts all the paths from `$other-router` and inserts them into the invocant router. This means any changes to `$other-router` after inclusion will not be reflected in the invocant.
 
-has $.routes
-------------
+Returns the number of routes stored.
 
 method match
 ------------
 
-    method match(Str $path)
+    method match(Str $path --> Path::Router::Route::Match)
 
-Return a [Path::Router::Route::Match](Path::Router::Route::Match) object for the first route that matches the given `$path`, or `undef` if no routes match.
+Return a [Path::Router::Route::Match](Path::Router::Route::Match) object for the best route that matches the given `$path`, or `undef` if no routes match.
 
-method uri-for
---------------
+The "best route" is chosen by matching the `$path` against every route. If no route matches, an undefined type object will be returned. If exactly one route matches, a match for that route will be returned. If multiple routes match, the one with the most required variables will be considered the best match and be returned. If there's more than one with the same number of required variables, an [X::Path::Router::AmbiguousMatch::PathMatch](#X::Path::Router::AmbiguousMatch::PathMatch) exception is thrown. This exception contains all the best matches, so your code can disambiguate them in any way you want.
 
-    method uri-for(*%path_descriptor)
+method path-for
+---------------
 
-Find the path that, when passed to `$router->match `, would produce the given arguments. Returns the path without any leading `/`. Returns `undef` if no routes match.
+    method path-for(*%path_descriptor --> Str)
 
-Debugging
+Find the path that, when passed to `method match `, would produce the given arguments. Returns the path without any leading `/`. Returns an undefined type-object if no routes match.
+
+This will throw an [X::Path::Router::AmbiguousMatch::ReverseMatch](#X::Path::Router::AmbiguousMatch::ReverseMatch) exception if multiple URLs match. This exception includes the possible routes so your code can disambiguate them in whatever fashion makes sense to you.
+
+DEBUGGING
 =========
 
-You can turn on the verbose debug logging with the `PATH_ROUTER_DEBUG` environment variable.
+You can turn on the verbose debug logging with the `PATH_ROUTER_DEBUG` environment variable. Set that environment variable to a truthy value to enable debugging.
 
 DIAGNOSTIC
 ==========
@@ -162,10 +187,22 @@ X::Path::Router::AmbiguousMatch::PathMatch
 
 This exception is thrown when a path is found to match two different routes equally well.
 
+Provides:
+
+  * `method path(--> Str) ` returns the ambiguous path.
+
+  * `method matches(--> Array) ` returns the best matches found.
+
 X::Path::Router::AmbiguousMatch::ReverseMatch
 ---------------------------------------------
 
-This exception is thrown when two paths are found to match a given criteria when looking up the `uri-for` a path
+This exception is thrown when two paths are found to match a given criteria when looking up the `path-for` a path
+
+Provides:
+
+  * `method match-keys(--> Array[Str]) ` returns the mapping that was ambiguous
+
+  * `method routes(--> Array[Str]) ` returns the best matches found
 
 X::Path::Router::BadInclusion
 -----------------------------
@@ -175,12 +212,25 @@ This exception is thrown whenever an attempt is made to include one router in an
 X::Path::Router::BadRoute
 -------------------------
 
-This exception is thrown when a route has some serious flaw, such as a validation for a variable that is not found in the path.
+This exception is thrown when a route has some serious flaw.
 
-BUG
-===
+Provides:
 
-All complex software has bugs lurking in it, and this module is no exception. If you find a bug please either email me, or add the bug to cpan-RT.
+  * `method path(--> Str) ` returns the bad route
+
+X::Path::Router::BadValidation
+------------------------------
+
+This is an [X::Path::Router::BadRoute](#X::Path::Router::BadRoute) exception that is thrown when a validation for a variable that is not found in the path.
+
+Provides:
+
+  * `method validation(--> Str) ` returns the validation variable that was named in the route, but was not found in the path
+
+X::Path::Router::BadSlurpy
+--------------------------
+
+This is an [X::Path::Router::BadRoute](#X::Path::Router::BadRoute) exception that is thrown when a validation attempts to add a slurpy parameter that is not at the end of the path.
 
 AUTHOR
 ======
