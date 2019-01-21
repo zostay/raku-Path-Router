@@ -75,21 +75,21 @@ multi method include-router(Pair $pair --> Int) {
     self.include-router($path, $router);
 }
 
-method match(Str $url is copy --> Path::Router::Route::Match) {
-    $url  = IO::Spec::Unix.canonpath($url, :parent);
-    $url .= subst(/^\//, '');
+method match(Str $path is copy, :%context --> Path::Router::Route::Match) {
+    $path  = IO::Spec::Unix.canonpath($path, :parent);
+    $path .= subst(/^\//, '');
 
-    my Str @parts = $url.comb(/ <-[ \/ ]>+ /);
+    my Str @parts = $path.comb(/ <-[ \/ ]>+ /);
 
     my Path::Router::Route::Match @matches;
     for @!routes -> $route {
-        my $match = $route.match(@parts) or next;
+        my $match = $route.match(@parts, :%context) orelse next;
         @matches.push: $match;
     }
 
     return Nil                        if @matches.elems == 0;
     return @matches[0]                if @matches.elems == 1;
-    return self!disambiguate-matches($url, @matches);
+    return self!disambiguate-matches($path, @matches);
 }
 
 method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches --> Path::Router::Route::Match) {
@@ -107,6 +107,12 @@ method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches --> 
         }
     }
 
+    if @found.elems == 2
+    && @found[0].route.has-conditions != @found[1].route.has-conditions {
+        return @found[0] if @found[0].route.has-conditions;
+        return @found[1];
+    }
+
     die X::Path::Router::AmbiguousMatch::PathMatch.new(
         :matches(@found), :$path
     ) if @found.elems > 1;
@@ -114,27 +120,36 @@ method !disambiguate-matches(Str $path, Path::Router::Route::Match @matches --> 
     @found[0];
 }
 
-method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
-    my @url;
+method !try-route(%path-map is copy, %context, Path::Router::Route $route --> Str) {
+    my @path;
+
+    my sub debug { note [~] @_ if $DEBUG }
+
+    if $route.has-conditions && %context {
+        unless $route.test-conditions(%context) {
+            debug("conditions failed");
+            return Nil;
+        }
+    }
 
     my $required = $route.required-variable-component-names;
     my $optional = $route.optional-variable-component-names;
 
-    my %url-defaults;
+    my %path-defaults;
 
     my %match = $route.defaults;
 
     for |$required.keys, |$optional.keys -> $component {
         next unless %match{$component} :exists;
-        %url-defaults{$component} = %match{$component} :delete;
+        %path-defaults{$component} = %match{$component} :delete;
     }
     # any remaining keys in %defaults are 'extra' -- they don't
-    # appear in the url, so they need to match exactly rather
+    # appear in the path, so they need to match exactly rather
     # than being filled in
 
-    %url-map = |%url-defaults, |%url-map;
+    %path-map = |%path-defaults, |%path-map;
 
-    my @keys = |%url-map.keys;
+    my @keys = |%path-map.keys;
 
     my class X::RouteNotMatched is Exception {
         has Str $.reason;
@@ -144,20 +159,18 @@ method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
         method message() { $!reason }
     }
 
-    my sub debug { note [~] @_ if $DEBUG }
-
     debug("> Attempting to match ", $route.path, " to (", @keys.join(" / "), ")");
 
     (
         $required.elems <= @keys.elems <= $required.elems + $optional.elems + %match.elems
-    ) || die X::RouteNotMatched.new("LENGTH DID NOT MATCH ({$required.elems} {$required.elems <= @keys.elems ?? "≤" !! "≰"} {@keys.elems} {@keys.elems <= $required.elems + $optional.elems + %match.elems ?? "≤" !! "≰"} {$required.elems} + {$optional.elems} + {%match.elems})"); #>>>>
+    ) || die X::RouteNotMatched.new("LENGTH DID NOT MATCH ({$required.elems} required {$required.elems <= @keys.elems ?? "≤" !! "≰"} {@keys.elems} keys {@keys.elems <= $required.elems + $optional.elems + %match.elems ?? "≤" !! "≰"} {$required.elems} required + {$optional.elems} optional + {%match.elems} match)"); #>>>>
 
-    if my @missing = $required.keys.grep({ !(%url-map{$_} :exists) }) {
+    if my @missing = $required.keys.grep({ !(%path-map{$_} :exists) }) {
         debug("missing: {@missing}");
         die X::RouteNotMatched.new("MISSING ITEM [{@missing}]");
     }
 
-    if my @extra = %url-map.keys.grep({
+    if my @extra = %path-map.keys.grep({
         $_ ∉ $required && $_ ∉ $optional && !%match{$_}
     }) {
         debug("extra: {@extra}");
@@ -165,7 +178,7 @@ method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
     }
 
     if my @nomatch = %match.keys.grep({
-        %url-map{$_} :exists and %url-map{$_} ne %match{$_}
+        %path-map{$_} :exists and %path-map{$_} ne %match{$_}
     }) {
         debug("no match: {@nomatch}");
         die X::RouteNotMatched.new("NO MATCH[{@nomatch}]");
@@ -178,50 +191,50 @@ method !try-route(%url-map is copy, Path::Router::Route $route --> Str) {
 
             unless $route.is-component-optional($component)
                 && $route.defaults{$name}
-                && $route.defaults{$name} eq %url-map{$name}
+                && $route.defaults{$name} eq %path-map{$name}
             {
-                my $c = %url-map{$name};
+                my $c = %path-map{$name};
                 $c = join '/', @($c)
                     if $route.is-component-slurpy($component);
-                @url.push: $c;
+                @path.push: $c;
             }
         }
 
         else {
             debug("\t\t... found a constant ($component)");
 
-            @url.push: $component;
+            @path.push: $component;
         }
 
-        debug("+++ URL so far ... ", @url.join("/"));
+        debug("+++ URL so far ... ", @path.join("/"));
     }
 
     CATCH {
         when X::RouteNotMatched {
-            debug('URL: ', @url.join("/"));
+            debug('URL: ', @path.join("/"));
             debug("... ", $_);
 
             return Nil;
         }
     }
 
-    @url.grep({ .defined }).join("/");
+    @path.grep({ .defined }).join("/");
 }
 
-method uri-for(*%url-map --> Str) is DEPRECATED("'path-for'") {
-    self.path-for(|%url-map);
+method uri-for(*%path-map --> Str) is DEPRECATED("'path-for'") {
+    self.path-for(|%path-map);
 }
 
-method path-for(*%url-map is copy --> Str) {
+method path-for(:%context, *%path-map is copy --> Str) {
 
-    # anything => undef is useless; ignore it and let the defaults override it
-    for %url-map {
-        %url-map{$_} :delete unless %url-map{$_}.defined;
+    # anything => Nil is useless; ignore it and let the defaults override it
+    for %path-map {
+        %path-map{$_} :delete unless %path-map{$_}.defined;
     }
 
     my @possible = gather for @!routes -> $route {
-        my $url = self!try-route(%url-map, $route);
-        take $[ $route, $url ] if $url.defined;
+        my $path = self!try-route(%path-map, %context, $route);
+        take $[ $route, $path ] with $path;
     }
 
     return Nil unless @possible;
@@ -230,29 +243,29 @@ method path-for(*%url-map is copy --> Str) {
     my @found;
     my $min;
     for @possible -> $possible {
-        my ($route, $url) = @($possible);
+        my ($route, $path) = @($possible);
 
-        temp %url-map = %url-map;
+        temp %path-map = %path-map;
 
         my $required = $route.required-variable-component-names;
         my $optional = $route.optional-variable-component-names;
 
-        my %url-defaults;
+        my %path-defaults;
 
         my %match = $route.defaults;
 
         for $required.list, $optional.list -> $component {
             next unless %match{$component} :exists;
-            %url-defaults{$component} = %match{$component} :delete;
+            %path-defaults{$component} = %match{$component} :delete;
         }
         # any remaining keys in %defaults are 'extra' -- they don't appear
-        # in the url, so they need to match exactly rather than being filled
+        # in the path, so they need to match exactly rather than being filled
         # in
 
-        %url-map = |%url-defaults, |%url-map;
+        %path-map = |%path-defaults, |%path-map;
 
         my $wanted = ($required.list ∪ $optional.list ∪ set %match.keys).SetHash;
-        $wanted{$_} :delete for %url-map.keys;
+        $wanted{$_} :delete for %path-map.keys;
 
         if (!$min.defined || $wanted.elems < $min) {
             @found = $possible;
@@ -264,7 +277,7 @@ method path-for(*%url-map is copy --> Str) {
     }
 
     die X::Path::Router::AmbiguousMatch::ReverseMatch.new(
-        match-keys => %url-map.keys,
+        match-keys => %path-map.keys,
         routes     => @found,
     ) if @found > 1;
 
@@ -279,7 +292,8 @@ method path-for(*%url-map is copy --> Str) {
 
   my $router = Path::Router.new;
 
-  $router.add-route('blog' => (
+  $router.add-route('blog' => %(
+      conditions => %( :method<GET> ),
       defaults => {
           controller => 'blog',
           action     => 'index',
@@ -290,7 +304,8 @@ method path-for(*%url-map is copy --> Str) {
       target => My::App.get_controller('blog').get_action('index')
   ));
 
-  $router.add-route('blog/:year/:month/:day' => (
+  $router.add-route('blog/:year/:month/:day' => %(
+      conditions => %( :method<GET> ),
       defaults => {
           controller => 'blog',
           action     => 'show_date',
@@ -306,7 +321,7 @@ method path-for(*%url-map is copy --> Str) {
       }
   ));
 
-  $router.add-route('blog/:action/?:id' => (
+  $router.add-route('blog/:action/?:id' => %(
       defaults => {
           controller => 'blog',
       },
@@ -322,7 +337,7 @@ method path-for(*%url-map is copy --> Str) {
   # ... in your dispatcher
 
   # returns a Path::Router::Route::Match object
-  my $match = $router.match('/blog/edit/15');
+  my $match = $router.match('/blog/edit/15', context => %( method => 'GET' ));
 
   # ... in your code
 
@@ -417,7 +432,7 @@ Examples:
     ));
 
     # If you want to prepend, omit "at", or specify 0
-    $router.insert_Route($path => %(
+    $router.insert-route($path => %(
         at => 0, |%options
     ));
 
@@ -437,27 +452,43 @@ Returns the number of routes stored.
 
 =head2 method match
 
-    method match(Str $path --> Path::Router::Route::Match)
+    method match(Str $path, :%context --> Path::Router::Route::Match)
 
-Return a L<Path::Router::Route::Match> object for the best route that matches the
-given C<$path>, or C<undef> if no routes match.
+Return a L<Path::Router::Route::Match> object for the best route that matches
+the given the C<$path> and C<%context> (if given), or an undefined type-object
+if no routes match.
 
-The "best route" is chosen by matching the C<$path> against every route. If no
-route matches, an undefined type object will be returned. If exactly one route
-matches, a match for that route will be returned. If multiple routes match, the
-one with the most required variables will be considered the best match and be
-returned. If there's more than one with the same number of required variables,
-an L<#X::Path::Router::AmbiguousMatch::PathMatch> exception is thrown. This
-exception contains all the best matches, so your code can disambiguate them in
-any way you want.
+The C<%context> is an optional value that is only used if routes with conditions are present. The context is used as an additional match in the process and can be used to apply extra conditions, such as matching the HTTP method when used in a web application.
+
+The "best route" is chosen by first matching the C<$path> against every route and then applying the following rules:
+
+=over
+
+=item If no route matches, an undefined type object will be returned. If exactly
+one route matches, a match for that route will be returned.
+
+=item If multiple routes match, the one with the most required variables will be
+considered the best match and be returned.
+
+=item In the case that exactly two routes match and have the same number of
+variables, but one has conditions and the other does not, the one that has
+conditions will be considered best and returned.
+
+=item Otherwise, if there is more than one matching route with the same number
+of required variables, an L<#X::Path::Router::AmbiguousMatch::PathMatch>
+exception is thrown. This exception contains all the best matches, so your code
+can disambiguate them in any way you want or treat this as an error condition as
+suits your application.
 
 =head2 method path-for
 
-    method path-for(*%path_descriptor --> Str)
+    method path-for(:%context, *%path_descriptor --> Str)
 
 Find the path that, when passed to C<< method match >>, would produce the
 given arguments.  Returns the path without any leading C</>.  Returns an
 undefined type-object if no routes match.
+
+The C<%context> is optional, but if present, this will also apply any route conditions to the given C<%context>.
 
 This will throw an L<#X::Path::Router::AmbiguousMatch::ReverseMatch> exception if
 multiple URLs match. This exception includes the possible routes so your code

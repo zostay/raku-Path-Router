@@ -15,6 +15,7 @@ class Path::Router::Route {
     has Str $.path;
     has %.defaults; # is copy
     has %.validations; # is copy
+    has %.conditions;
     has Str @.components = self!build-components(); # is no-clone
     has Int $.length = self!build-length; # is no-clone
     has Int $.length-without-optionals = self!build-length-without-optionals; # is no-clone
@@ -37,6 +38,10 @@ class Path::Router::Route {
 
     method has-validations(--> Bool) {
         ?%!validations;
+    }
+
+    method has-conditions(--> Bool) {
+        ?%!conditions;
     }
 
     submethod TWEAK {
@@ -130,7 +135,14 @@ class Path::Router::Route {
         self.is-component-slurpy(@!components[*-1])
     }
 
-    method match(@parts --> Path::Router::Route::Match) {
+    method test-conditions(%context --> Bool) {
+        [&&] gather for %!conditions.kv -> $key, $match {
+            my $value = %context{ $key };
+            take $value ~~ $match;
+        }
+    }
+
+    method match(@parts, :%context --> Path::Router::Route::Match) {
         # No match if the parts length is not long enough
         return Nil unless @parts >= $!length-without-optionals;
 
@@ -142,6 +154,13 @@ class Path::Router::Route {
 
         # a working copy of parts we'll shift from as we go
         my @wc-parts = @parts;
+
+        # If it has conditions, test those first.
+        if $.has-conditions {
+
+            # short-circuit to no match if conditional match fails
+            return Nil unless self.test-conditions(%context);
+        }
 
         for @!components -> $c {
             unless @wc-parts {
@@ -288,6 +307,16 @@ This defines any validations the route needs to perform for each variable. For
 C<Int>, C<UInt>, C<Rat>, C<Real>, and C<Num>, it will also cause coercion to
 happen on the incoming path components.
 
+=head2 conditions
+
+    has %.conditions
+
+This defined any conditions to set on the route. When conditions are set, the
+conditions are matched against the C<%context> argument that may be passed to
+L<#method match>. Any condition that fails to match will cause the route to fail
+to match. This can be useful, for example, for matching against request method
+when used to match HTTP requests.
+
 =head1 METHODS
 
 =head2 method has-defaults
@@ -308,12 +337,29 @@ Returns C<True> if this route has any validations.
 
 Returns C<True> if this route has a validation with the given C<$name>.
 
+=head2 method has-conditions
+
+    method has-conditions(--> Bool)
+
+Returns C<True> if this route has at least one condition set.
+
+=head2 method test-conditions
+
+    method test-conditiosn(%context --> Bool)
+
+Given a context to test agains, this will test that context against the conditions set on the route. This test should only be executed if C<has-conditions> returns C<True>.
+
 =head2 method match
 
-    method match(@parts --> Path::Router::Route::Match)
+    method match(@parts, :%context --> Path::Router::Route::Match)
 
 Returns a defined L<Path::Router::Route::Match> if this route matches the given
 path parts. Returns an undefined type-object otherwise.
+
+You may provide an optional C<%context> value when matching. This value is
+ignored unless the route being match as a L<#condition> set. In that case, the
+conditions are checked against the context. If any condition fails to match, the
+route will not match.
 
 =head1 Component checks
 
