@@ -1,5 +1,12 @@
 {{$NEXT}}
 
+    * Added conditions to routes, which can be used to only allow routes to be
+      available when certain conditions apply.
+    * Added context to .match and .path-for methods for matching against
+      conditions.
+    * Revised the documentation a bit more, fixing more corrections needed form
+      the Perl 5 to Perl 6 port that I'd overlooked previously.
+
 v0.3.0	2019-01-12
 
     * COMPATIBILITY BREAKING: Prior to this revision, .add-route(...) allowed
