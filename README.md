@@ -8,7 +8,8 @@ SYNOPSIS
 
     my $router = Path::Router.new;
 
-    $router.add-route('blog' => (
+    $router.add-route('blog' => %(
+        conditions => %( :method<GET> ),
         defaults => {
             controller => 'blog',
             action     => 'index',
@@ -19,7 +20,8 @@ SYNOPSIS
         target => My::App.get_controller('blog').get_action('index')
     ));
 
-    $router.add-route('blog/:year/:month/:day' => (
+    $router.add-route('blog/:year/:month/:day' => %(
+        conditions => %( :method<GET> ),
         defaults => {
             controller => 'blog',
             action     => 'show_date',
@@ -35,7 +37,7 @@ SYNOPSIS
         }
     ));
 
-    $router.add-route('blog/:action/?:id' => (
+    $router.add-route('blog/:action/?:id' => %(
         defaults => {
             controller => 'blog',
         },
@@ -51,7 +53,7 @@ SYNOPSIS
     # ... in your dispatcher
 
     # returns a Path::Router::Route::Match object
-    my $match = $router.match('/blog/edit/15');
+    my $match = $router.match('/blog/edit/15', context => %( method => 'GET' ));
 
     # ... in your code
 
@@ -95,8 +97,10 @@ This module has no opinions about what it might be useful for. It simply produce
 ATTRIBUTES
 ==========
 
-has Path::Router::Route @.routes
---------------------------------
+routes
+------
+
+    has Path::Router::Route @.routes
 
 Stores all the route objects that have been added to the router.
 
@@ -136,7 +140,7 @@ Examples:
     ));
 
     # If you want to prepend, omit "at", or specify 0
-    $router.insert_Route($path => %(
+    $router.insert-route($path => %(
         at => 0, |%options
     ));
 
@@ -154,18 +158,35 @@ Returns the number of routes stored.
 method match
 ------------
 
-    method match(Str $path --> Path::Router::Route::Match)
+    method match(Str $path, :%context --> Path::Router::Route::Match)
 
-Return a [Path::Router::Route::Match](Path::Router::Route::Match) object for the best route that matches the given `$path`, or `undef` if no routes match.
+Return a [Path::Router::Route::Match](Path::Router::Route::Match) object for the best route that matches the given the `$path` and `%context` (if given), or an undefined type-object if no routes match.
 
-The "best route" is chosen by matching the `$path` against every route. If no route matches, an undefined type object will be returned. If exactly one route matches, a match for that route will be returned. If multiple routes match, the one with the most required variables will be considered the best match and be returned. If there's more than one with the same number of required variables, an [X::Path::Router::AmbiguousMatch::PathMatch](#X::Path::Router::AmbiguousMatch::PathMatch) exception is thrown. This exception contains all the best matches, so your code can disambiguate them in any way you want.
+The `%context` is an optional value that is only used if routes with conditions are present. The context is used as an additional match in the process and can be used to apply extra conditions, such as matching the HTTP method when used in a web application.
+
+The "best route" is chosen by first matching the `$path` against every route and then applying the following rules:
+
+over
+====
+
+
+
+  * If no route matches, an undefined type object will be returned. If exactly one route matches, a match for that route will be returned.
+
+  * If multiple routes match, the one with the most required variables will be considered the best match and be returned.
+
+  * In the case that exactly two routes match and have the same number of variables, but one has conditions and the other does not, the one that has conditions will be considered best and returned.
+
+  * Otherwise, if there is more than one matching route with the same number of required variables, an [X::Path::Router::AmbiguousMatch::PathMatch](#X::Path::Router::AmbiguousMatch::PathMatch) exception is thrown. This exception contains all the best matches, so your code can disambiguate them in any way you want or treat this as an error condition as suits your application.
 
 method path-for
 ---------------
 
-    method path-for(*%path_descriptor --> Str)
+    method path-for(:%context, *%path_descriptor --> Str)
 
 Find the path that, when passed to `method match `, would produce the given arguments. Returns the path without any leading `/`. Returns an undefined type-object if no routes match.
+
+The `%context` is optional, but if present, this will also apply any route conditions to the given `%context`.
 
 This will throw an [X::Path::Router::AmbiguousMatch::ReverseMatch](#X::Path::Router::AmbiguousMatch::ReverseMatch) exception if multiple URLs match. This exception includes the possible routes so your code can disambiguate them in whatever fashion makes sense to you.
 
