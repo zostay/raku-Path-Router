@@ -228,7 +228,7 @@ method uri-for(*%path-map --> Str) is DEPRECATED("'path-for'") {
 method path-for(:%context, *%path-map is copy --> Str) {
 
     # anything => Nil is useless; ignore it and let the defaults override it
-    for %path-map {
+    for %path-map.keys {
         %path-map{$_} :delete unless %path-map{$_}.defined;
     }
 
