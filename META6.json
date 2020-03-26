@@ -33,7 +33,6 @@
     
   ],
   "depends": [
-    "IO::String",
     "Linenoise"
   ],
   "description": "A tool for routing paths",
@@ -44,4 +43,3 @@
   "build-depends": [
     
   ]
-}

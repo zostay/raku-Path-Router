@@ -4,7 +4,6 @@ use v6;
 
 use Test;
 use Test::Path::Router;
-use IO::String;
 use Path::Router;
 
 my $router  = Path::Router.new;
@@ -13,8 +12,11 @@ my $router  = Path::Router.new;
 # equivalent tools in Perl6 aren't quite there yet.
 
 sub init-io {
-    my $output = IO::String.new;
-    my $error  = IO::String.new;
+    my $output = $*TMPDIR.add(('a'..'z').roll(20).join).open(:rw);
+    $output.path.unlink;
+
+    my $error = $*TMPDIR.add(('a'..'z').roll(20).join).open(:rw);
+    $error.path.unlink;
 
     Test::output()         = $output;
     Test::failure_output() = $error;
@@ -126,7 +128,7 @@ for %tests.keys.sort -> $function {
 
         my ($output, $error) = init-io;
 
-        my @arguments   = %tests{$function}{$state}<args>.Slip;
+        my @arguments   = |%tests{$function}{$state}<args>;
         my $description = %tests{$function}{$state}<desc>;
 
         # This is a trick to prevent Test.pm from blowing up the exit status
@@ -140,14 +142,20 @@ for %tests.keys.sort -> $function {
         my $expect = $state eq 'pass' ?? "ok" !! "not ok";
         $expect ~= " " ~ $i;
 
-        if ~$output ~~ /^^$expect/ {
+        $output.seek(0, SeekFromBeginning);
+        $error.seek(0, SeekFromBeginning);
+
+        my $outputs = $output.slurp;
+        if $outputs ~~ /^^$expect/ {
             say "ok $i - $description";
         }
         else {
             say "not ok $i - $description";
-            note "# Got test like:      $output";
+            note "# Got test like:      $outputs";
             note "# Expected test like: $expect";
-            note ~$error if ~$error;
+
+            my $errors = $error.slurp;
+            note $errors with $errors;
         }
     }
 }
