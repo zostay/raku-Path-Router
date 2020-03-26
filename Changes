@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+    * Bugfix: Fix broken test because IO::String is broken.
+
 v0.5.0	2019-03-01
 
     * Added a new path-for candidate which accepts a single hash value.
